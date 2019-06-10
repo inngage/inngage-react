@@ -1,11 +1,19 @@
 {
-  "name": "inngage-react",
+  "name": "@inngageregistry/inngage-react",
   "version": "1.0.0",
-  "description": "",
+  "description": "Inngage react integration",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "LAP - BrunoBNascimento",
-  "license": "ISC"
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/inngage/inngage-react.git"
+  },
+  "bugs": {
+    "url": "https://github.com/inngage/inngage-react/issues"
+  },
+  "homepage": "https://github.com/inngage/inngage-react#readme"
 }
