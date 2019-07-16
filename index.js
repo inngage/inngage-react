@@ -1,5 +1,6 @@
 import firebase from 'react-native-firebase'
 import DeviceInfo from 'react-native-device-info'
+import debounce from 'lodash.debounce'
 import { formatDate } from './utils'
 import ListenToNotifications from './ListenToNotifications'
 import { subscription, geolocation } from './inngageApi'
@@ -46,7 +47,7 @@ const getFirebaseAccess = () => {
 const geoFence = (appToken, dev) => {
   return new Promise((resolve) => {
     navigator.geolocation.getCurrentPosition(() => {
-      navigator.geolocation.watchPosition((position) => {
+      const watchPositionCallBack = (position) => {
         const request = {
           registerGeolocationRequest: {
             uuid: DeviceInfo.getUniqueID(),
@@ -57,7 +58,11 @@ const geoFence = (appToken, dev) => {
         }
 
         geolocation(request, dev).then(() => resolve(position)).catch(console.error)
-      })
+      }
+
+      const debouncedWatchPosition = debounce(watchPositionCallBack, 500)
+
+      navigator.geolocation.watchPosition(debouncedWatchPosition)
     })
   })
 }

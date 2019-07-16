@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/inngage/inngage-react/issues"
   },
-  "homepage": "https://github.com/inngage/inngage-react#readme"
+  "homepage": "https://github.com/inngage/inngage-react#readme",
+  "dependencies": {
+    "lodash.debounce": "^4.0.8"
+  }
 }
