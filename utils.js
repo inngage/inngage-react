@@ -2,6 +2,8 @@ import { Alert } from 'react-native'
 
 const baseUrlHook = {
   [false]: 'https://api.inngage.com.br/v1',
+  [undefined]: 'https://api.inngage.com.br/v1',
+  [null]: 'https://api.inngage.com.br/v1',
   [true]: 'https://apid.inngage.com.br/v1',
 }
 
