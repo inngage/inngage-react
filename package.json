@@ -1,6 +1,6 @@
 {
   "name": "@inngageregistry/inngage-react",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Inngage react integration",
   "main": "index.js",
   "scripts": {
