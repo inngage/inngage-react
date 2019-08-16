@@ -61,7 +61,7 @@ export default async ({ appToken, dev }) => {
           .then(() => showAlert(title, body))
           .catch(console.log)
       }
-    })
+    }).catch(console.log)
   })
 
   firebase.notifications().onNotificationOpened((notificationOpen) => {
@@ -93,7 +93,7 @@ export default async ({ appToken, dev }) => {
           .then(() => showAlert(title, body))
           .catch(console.log)
       }
-    })
+    }).catch(console.log)
   })
   const notificationOpen = await firebase.notifications().getInitialNotification()
 
