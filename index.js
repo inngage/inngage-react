@@ -1,4 +1,4 @@
-import { PermissionsAndroid } from "react-native";
+import { PermissionsAndroid, Platform } from "react-native";
 import firebase from "react-native-firebase";
 import DeviceInfo from "react-native-device-info";
 import { formatDate } from "./utils";
@@ -45,39 +45,64 @@ const getFirebaseAccess = () => {
 };
 
 const watch = (appToken, dev, geofenceWatch = false) => {
-  return new Promise(resolve => {
-    navigator.geolocation.getCurrentPosition(coords => {
-
-      if (geofenceWatch) {
-        navigator.geolocation.watchPosition(position => {
+  return new Promise(async resolve => {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      {
+        title: "Localização",
+        message:
+          "Permitir localização",
+        buttonNeutral: "Perguntar depois",
+        buttonNegative: "Não",
+        buttonPositive: "Sim"
+      }
+    );
+    if (granted === PermissionsAndroid.RESULTS.GRANTED || Platform.OS === 'ios') {
+      navigator.geolocation.getCurrentPosition(coords => {
+        if (geofenceWatch) {
+          navigator.geolocation.watchPosition(position => {
+            const request = {
+              registerGeolocationRequest: {
+                uuid: DeviceInfo.getUniqueID(),
+                lat: position.coords.latitude,
+                lon: position.coords.longitude,
+                app_token: appToken
+              }
+            };
+            geolocation(request, dev)
+              .then(() => resolve(position))
+              .catch(console.error);
+          }, console.log);
+        } else {
           const request = {
             registerGeolocationRequest: {
               uuid: DeviceInfo.getUniqueID(),
-              lat: position.coords.latitude,
-              lon: position.coords.longitude,
+              lat: coords.coords.latitude,
+              lon: coords.coords.longitude,
               app_token: appToken
             }
           };
-
+  
           geolocation(request, dev)
-            .then(() => resolve(position))
+            .then(() => resolve(coords))
             .catch(console.error);
-        }, console.log);
-      } else {
-        const request = {
-          registerGeolocationRequest: {
-            uuid: DeviceInfo.getUniqueID(),
-            lat: coords.coords.latitude,
-            lon: coords.coords.longitude,
-            app_token: appToken
-          }
-        };
+        }
+      }, console.log);
+    } else {
+      const request = {
+        registerGeolocationRequest: {
+          uuid: DeviceInfo.getUniqueID(),
+          lat: 0,
+          lon: 0,
+          app_token: appToken
+        }
+      };
 
-        geolocation(request, dev)
-          .then(() => resolve(coords))
-          .catch(console.error);
-      }
-    }, console.log);
+      geolocation(request, dev)
+        .then(() => resolve(coords))
+        .catch(console.error);
+    }
+    
   });
 };
 
