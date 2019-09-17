@@ -152,8 +152,8 @@ export const GetPermission = async props => {
         app_installed_in: formatDate(DeviceInfo.getFirstInstallTime()),
         app_updated_in: formatDate(DeviceInfo.getLastUpdateTime()),
         uuid: DeviceInfo.getUniqueID(),
-        lat: coords.latitude ? coords.latitude : null,
-        long: coords.longitude ? coords.longitude : null
+        lat: (coords && coords.latitude) ? coords.latitude : null,
+        long: (coords && coords.longitude) ? coords.longitude : null
       }
     };
 
