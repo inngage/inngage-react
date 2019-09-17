@@ -82,7 +82,7 @@ const watch = (appToken, dev, geofenceWatch = false) => {
               app_token: appToken
             }
           };
-  
+
           geolocation(request, dev)
             .then(() => resolve(coords))
             .catch(console.error);
@@ -99,10 +99,10 @@ const watch = (appToken, dev, geofenceWatch = false) => {
       };
 
       geolocation(request, dev)
-        .then(() => resolve(coords))
+        .then(() => resolve({}))
         .catch(console.error);
     }
-    
+
   });
 };
 
@@ -134,9 +134,7 @@ export const GetPermission = async props => {
       geoFence(appToken, dev, geofenceWatch),
       getFirebaseAccess()
     ]);
-    const { latitude, longitude } = location.coords;
-
-    if(!latitude && !longitude) return { subscribed: false }
+    const { coords } = location;
 
     const rawRequest = {
       registerSubscriberRequest: {
@@ -154,8 +152,8 @@ export const GetPermission = async props => {
         app_installed_in: formatDate(DeviceInfo.getFirstInstallTime()),
         app_updated_in: formatDate(DeviceInfo.getLastUpdateTime()),
         uuid: DeviceInfo.getUniqueID(),
-        lat: latitude,
-        long: longitude
+        lat: coords.latitude ? coords.latitude : null,
+        long: coords.longitude ? coords.longitude : null
       }
     };
 
