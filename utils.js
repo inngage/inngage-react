@@ -28,6 +28,9 @@ export const fetchClient = (method, requestBody, path, isDev = false) => {
 }
 
 export const formatDate = (timestamp) => {
+  if(!timestamp) {
+    return null
+  }
   return new Date(timestamp).toISOString()
 }
 
