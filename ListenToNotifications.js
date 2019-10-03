@@ -29,7 +29,10 @@ const linkInApp = (link) => {
 const openLinkByType = (type, url) => (type === 'deep' ? Linking.openURL(url) : linkInApp(url))
 
 const onMessageListener = () => firebase.messaging().onMessage((message) => {
-  showAlert(JSON.stringify(message))
+  const { _data } = message
+  if(_data && _data.body && _data.title) {
+    showAlert(_data.title, _data.body)
+  }
 })
 
 export default async ({ appToken, dev }) => {

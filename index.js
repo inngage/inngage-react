@@ -46,17 +46,20 @@ const getFirebaseAccess = () => {
 
 const watch = (appToken, dev, geofenceWatch = false) => {
   return new Promise(async resolve => {
-    const granted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      {
-        title: "Localização",
-        message:
-          "Permitir localização",
-        buttonNeutral: "Perguntar depois",
-        buttonNegative: "Não",
-        buttonPositive: "Sim"
-      }
-    );
+    let granted = false
+    if(Platform.OS === 'android') {
+      granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        {
+          title: "Localização",
+          message:
+            "Permitir localização",
+          buttonNeutral: "Perguntar depois",
+          buttonNegative: "Não",
+          buttonPositive: "Sim"
+        }
+      ) 
+    }
     if (granted === PermissionsAndroid.RESULTS.GRANTED || Platform.OS === 'ios') {
       navigator.geolocation.getCurrentPosition(coords => {
         if (geofenceWatch) {
@@ -69,10 +72,10 @@ const watch = (appToken, dev, geofenceWatch = false) => {
                 app_token: appToken
               }
             };
-            geolocation(request, dev)
+            return geolocation(request, dev)
               .then(() => resolve(position))
-              .catch(console.error);
-          }, console.log);
+              .catch(resolve(position));
+          }, () => resolve({}));
         } else {
           const request = {
             registerGeolocationRequest: {
@@ -83,11 +86,11 @@ const watch = (appToken, dev, geofenceWatch = false) => {
             }
           };
 
-          geolocation(request, dev)
+          return geolocation(request, dev)
             .then(() => resolve(coords))
-            .catch(console.error);
+            .catch(resolve(coords));
         }
-      }, console.log);
+      }, () => resolve({}));
     } else {
       const request = {
         registerGeolocationRequest: {
@@ -98,9 +101,9 @@ const watch = (appToken, dev, geofenceWatch = false) => {
         }
       };
 
-      geolocation(request, dev)
+      return geolocation(request, dev)
         .then(() => resolve({}))
-        .catch(console.error);
+        .catch(resolve({}));
     }
 
   });
@@ -169,7 +172,6 @@ export const GetPermission = async props => {
             ...rawRequest.registerSubscriberRequest
           }
         };
-
     return subscription(request, dev);
   } catch (e) {
     console.error(e);
