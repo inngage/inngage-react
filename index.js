@@ -1,9 +1,11 @@
 import { PermissionsAndroid, Platform } from "react-native";
-import firebase from "react-native-firebase";
+import { firebase } from '@react-native-firebase/messaging';
 import DeviceInfo from "react-native-device-info";
+import * as RNLocalize from "react-native-localize";
 import { formatDate } from "./utils";
 import ListenToNotifications from "./ListenToNotifications";
 import { subscription, geolocation } from "./inngageApi";
+import Geolocation from '@react-native-community/geolocation';
 
 // fetch logger
 global._fetch = fetch;
@@ -61,12 +63,12 @@ const watch = (appToken, dev, geofenceWatch = false) => {
       ) 
     }
     if (granted === PermissionsAndroid.RESULTS.GRANTED || Platform.OS === 'ios') {
-      navigator.geolocation.getCurrentPosition(coords => {
+      Geolocation.getCurrentPosition(coords => {
         if (geofenceWatch) {
-          navigator.geolocation.watchPosition(position => {
+          Geolocation.watchPosition(position => {
             const request = {
               registerGeolocationRequest: {
-                uuid: DeviceInfo.getUniqueID(),
+                uuid: DeviceInfo.getUniqueId(),
                 lat: position.coords.latitude,
                 lon: position.coords.longitude,
                 app_token: appToken
@@ -79,7 +81,7 @@ const watch = (appToken, dev, geofenceWatch = false) => {
         } else {
           const request = {
             registerGeolocationRequest: {
-              uuid: DeviceInfo.getUniqueID(),
+              uuid: DeviceInfo.getUniqueId(),
               lat: coords.coords.latitude,
               lon: coords.coords.longitude,
               app_token: appToken
@@ -94,7 +96,7 @@ const watch = (appToken, dev, geofenceWatch = false) => {
     } else {
       const request = {
         registerGeolocationRequest: {
-          uuid: DeviceInfo.getUniqueID(),
+          uuid: DeviceInfo.getUniqueId(),
           lat: 0,
           lon: 0,
           app_token: appToken
@@ -139,6 +141,15 @@ export const GetPermission = async props => {
     ]);
     const { coords } = location;
 
+    const locales = RNLocalize.getLocales();
+
+    const os_language = locales && locales.length ? locales[0].languageCode : ''
+    const device_manufacturer = await DeviceInfo.getManufacturer();
+    const installTime = await DeviceInfo.getFirstInstallTime();
+    const lastUpdateTime = await DeviceInfo.getLastUpdateTime();
+    const app_installed_in = formatDate(installTime);
+    app_updated_in = formatDate(lastUpdateTime);
+
     const rawRequest = {
       registerSubscriberRequest: {
         app_token: appToken,
@@ -147,14 +158,14 @@ export const GetPermission = async props => {
         platform: DeviceInfo.getSystemName(),
         sdk: DeviceInfo.getBuildNumber(),
         device_model: DeviceInfo.getModel(),
-        device_manufacturer: DeviceInfo.getManufacturer(),
-        os_locale: DeviceInfo.getDeviceCountry(),
-        os_language: DeviceInfo.getDeviceLocale(),
+        device_manufacturer,
+        os_locale: RNLocalize.getCountry(),
+        os_language,
         os_version: DeviceInfo.getReadableVersion(),
         app_version: DeviceInfo.getBuildNumber(),
-        app_installed_in: formatDate(DeviceInfo.getFirstInstallTime()),
-        app_updated_in: formatDate(DeviceInfo.getLastUpdateTime()),
-        uuid: DeviceInfo.getUniqueID(),
+        app_installed_in,
+        app_updated_in,
+        uuid: DeviceInfo.getUniqueId(),
         lat: (coords && coords.latitude) ? coords.latitude : null,
         long: (coords && coords.longitude) ? coords.longitude : null
       }
