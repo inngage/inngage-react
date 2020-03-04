@@ -2,9 +2,9 @@ import { PermissionsAndroid, Platform } from "react-native";
 import { firebase } from '@react-native-firebase/messaging';
 import DeviceInfo from "react-native-device-info";
 import * as RNLocalize from "react-native-localize";
-import { formatDate } from "./utils";
+import { formatDate, subscriptionRequestAdapter } from "./utils";
 import ListenToNotifications from "./ListenToNotifications";
-import { subscription, geolocation } from "./inngageApi";
+import { subscription } from "./inngageApi";
 import Geolocation from '@react-native-community/geolocation';
 
 // fetch logger
@@ -12,13 +12,17 @@ global._fetch = fetch;
 global.fetch = function(uri, options, ...args) {
   return global._fetch(uri, options, ...args).then(response => {
     console.log("Fetch", { request: { uri, options, ...args }, response });
-
     return response;
   });
 };
 
 const getFirebaseAccess = () => {
   return new Promise((resolve, reject) => {
+    DeviceInfo.isEmulator().then(isEmulator => {
+      if(isEmulator) {
+        return resolve('W7SAl94Jk6l3w95W9wCgmv3zZ99V5FReNUytdgJUFUvpvZoqXf72')
+      }
+    })
     firebase
       .messaging()
       .hasPermission()
@@ -46,7 +50,7 @@ const getFirebaseAccess = () => {
   });
 };
 
-const watch = (appToken, dev, geofenceWatch = false) => {
+const watch = (geofenceWatch = false) => {
   return new Promise(async resolve => {
     let granted = false
     if(Platform.OS === 'android') {
@@ -63,64 +67,21 @@ const watch = (appToken, dev, geofenceWatch = false) => {
       ) 
     }
     if (granted === PermissionsAndroid.RESULTS.GRANTED || Platform.OS === 'ios') {
-      Geolocation.getCurrentPosition(coords => {
+      return Geolocation.getCurrentPosition(coords => {
         if (geofenceWatch) {
           Geolocation.watchPosition(position => {
-            const request = {
-              registerGeolocationRequest: {
-                uuid: DeviceInfo.getUniqueId(),
-                lat: position.coords.latitude,
-                lon: position.coords.longitude,
-                app_token: appToken
-              }
-            };
-            return geolocation(request, dev)
-              .then(() => resolve(position))
-              .catch(resolve(position));
+            return resolve(position)
           }, () => resolve({}));
-        } else {
-          const request = {
-            registerGeolocationRequest: {
-              uuid: DeviceInfo.getUniqueId(),
-              lat: coords.coords.latitude,
-              lon: coords.coords.longitude,
-              app_token: appToken
-            }
-          };
-
-          return geolocation(request, dev)
-            .then(() => resolve(coords))
-            .catch(resolve(coords));
         }
+        return resolve(coords)
       }, () => resolve({}));
-    } else {
-      const request = {
-        registerGeolocationRequest: {
-          uuid: DeviceInfo.getUniqueId(),
-          lat: 0,
-          lon: 0,
-          app_token: appToken
-        }
-      };
-
-      return geolocation(request, dev)
-        .then(() => resolve({}))
-        .catch(resolve({}));
     }
-
+    return resolve({})
   });
 };
 
-const getCurrentPosition = () => {
-  return new Promise(resolve => {
-    navigator.geolocation.getCurrentPosition(coords => {
-      resolve(coords);
-    }, console.log);
-  });
-};
-
-const geoFence = (appToken, dev, geofenceWatch) => {
-  return watch(appToken, dev, geofenceWatch);
+const geoFence = (geofenceWatch) => {
+  return watch(geofenceWatch);
 };
 
 export const GetPermission = async props => {
@@ -136,7 +97,7 @@ export const GetPermission = async props => {
       geofenceWatch
     } = props;
     const [location, respToken] = await Promise.all([
-      geoFence(appToken, dev, geofenceWatch),
+      geoFence(geofenceWatch),
       getFirebaseAccess()
     ]);
     const { coords } = location;
@@ -171,18 +132,7 @@ export const GetPermission = async props => {
       }
     };
 
-    const request = customData
-      ? {
-          registerSubscriberRequest: {
-            ...rawRequest.registerSubscriberRequest,
-            custom_field: customFields
-          }
-        }
-      : {
-          registerSubscriberRequest: {
-            ...rawRequest.registerSubscriberRequest
-          }
-        };
+    const request = subscriptionRequestAdapter(rawRequest, customData, customFields) 
     return subscription(request, dev);
   } catch (e) {
     console.error(e);

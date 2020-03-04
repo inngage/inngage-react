@@ -50,3 +50,19 @@ export const showAlertLink = (title, body, appName, link) => {
     )
   })
 }
+
+export const subscriptionRequestAdapter = (sdkRequest, useCustomData, customData) => {
+  if(useCustomData) {
+    return {
+      registerSubscriberRequest: {
+        ...sdkRequest.registerSubscriberRequest,
+        custom_field: customData
+      }
+    }
+  }
+  return {
+    registerSubscriberRequest: {
+      ...sdkRequest.registerSubscriberRequest
+    }
+  };
+}
