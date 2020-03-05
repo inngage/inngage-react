@@ -2,10 +2,11 @@ import { PermissionsAndroid, Platform } from "react-native";
 import { firebase } from '@react-native-firebase/messaging';
 import DeviceInfo from "react-native-device-info";
 import * as RNLocalize from "react-native-localize";
+import Geolocation from '@react-native-community/geolocation';
+import PushNotificationIOS from "@react-native-community/push-notification-ios";
 import { formatDate, subscriptionRequestAdapter } from "./utils";
 import ListenToNotifications from "./ListenToNotifications";
 import { subscription } from "./inngageApi";
-import Geolocation from '@react-native-community/geolocation';
 
 // fetch logger
 global._fetch = fetch;
@@ -23,30 +24,25 @@ const getFirebaseAccess = () => {
         return resolve('W7SAl94Jk6l3w95W9wCgmv3zZ99V5FReNUytdgJUFUvpvZoqXf72')
       }
     })
-    firebase
-      .messaging()
-      .hasPermission()
-      .then(enabled => {
-        if (enabled) {
-          firebase
+    PushNotificationIOS.checkPermissions(permissions => {
+      if(permissions.alert || permissions.badge || permissions.sound) {
+        return firebase
+        .messaging()
+        .getToken()
+        .then(resolve)
+        .catch(reject);
+      }
+        return PushNotificationIOS.requestPermissions().then(permissions => {
+          if(permissions.alert || permissions.badge || permissions.sound) {
+            return firebase
             .messaging()
             .getToken()
             .then(resolve)
             .catch(reject);
-        } else {
-          firebase
-            .messaging()
-            .requestPermission()
-            .then(() => {
-              firebase
-                .messaging()
-                .getToken()
-                .then(resolve)
-                .catch(reject);
-            })
-            .catch(reject);
-        }
-      });
+          }
+          return resolve('W7SAl94Jk6l3w95W9wCgmv3zZ99V5FReNUytdgJUFUvpvZoqXf72')
+        })
+    })
   });
 };
 
