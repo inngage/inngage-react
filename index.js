@@ -17,23 +17,25 @@ global.fetch = function(uri, options, ...args) {
   });
 };
 
-const getFirebaseAccess = () => {
-  return new Promise((resolve, reject) => {
+const getFirebaseAccess = async () => {
+  return new Promise( async (resolve, reject) => {
     DeviceInfo.isEmulator().then(isEmulator => {
       if(isEmulator) {
         return resolve('W7SAl94Jk6l3w95W9wCgmv3zZ99V5FReNUytdgJUFUvpvZoqXf72')
       }
     })
-    PushNotificationIOS.checkPermissions(permissions => {
+    await PushNotificationIOS.checkPermissions(async permissions => {
       if(permissions.alert || permissions.badge || permissions.sound) {
+        await firebase.messaging().registerForRemoteNotifications()
         return firebase
         .messaging()
         .getToken()
         .then(resolve)
         .catch(reject);
       }
-        return PushNotificationIOS.requestPermissions().then(permissions => {
+        return await PushNotificationIOS.requestPermissions().then( async permissions => {
           if(permissions.alert || permissions.badge || permissions.sound) {
+            await firebase.messaging().registerForRemoteNotifications()
             return firebase
             .messaging()
             .getToken()
