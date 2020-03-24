@@ -3,7 +3,6 @@ import { firebase } from '@react-native-firebase/messaging';
 import DeviceInfo from "react-native-device-info";
 import * as RNLocalize from "react-native-localize";
 import Geolocation from '@react-native-community/geolocation';
-import PushNotificationIOS from "@react-native-community/push-notification-ios";
 import { formatDate, subscriptionRequestAdapter } from "./utils";
 import ListenToNotifications from "./ListenToNotifications";
 import { subscription } from "./inngageApi";
@@ -17,34 +16,36 @@ global.fetch = function(uri, options, ...args) {
   });
 };
 
-const getFirebaseAccess = async () => {
-  return new Promise( async (resolve, reject) => {
+const getFirebaseAccess = () => {
+  let firebaseToken = 'W7SAl94Jk6l3w95W9wCgmv3zZ99V5FReNUytdgJUFUvpvZoqXf72'
+  return new Promise(async (resolve, reject) => {
     DeviceInfo.isEmulator().then(isEmulator => {
       if(isEmulator) {
-        return resolve('W7SAl94Jk6l3w95W9wCgmv3zZ99V5FReNUytdgJUFUvpvZoqXf72')
+        return resolve(firebaseToken)
       }
     })
-    await PushNotificationIOS.checkPermissions(async permissions => {
-      if(permissions.alert || permissions.badge || permissions.sound) {
-        await firebase.messaging().registerForRemoteNotifications()
-        return firebase
-        .messaging()
-        .getToken()
-        .then(resolve)
-        .catch(reject);
+    try {
+      await firebase.messaging().registerForRemoteNotifications()
+      const permission = await firebase.messaging().hasPermission()
+      if(!permission) {
+        try {
+        await firebase.messaging().requestPermission()
+        } catch (e) {
+          console.log(e)
+          return resolve(firebaseToken)
+        }
       }
-        return await PushNotificationIOS.requestPermissions().then( async permissions => {
-          if(permissions.alert || permissions.badge || permissions.sound) {
-            await firebase.messaging().registerForRemoteNotifications()
-            return firebase
-            .messaging()
-            .getToken()
-            .then(resolve)
-            .catch(reject);
-          }
-          return resolve('W7SAl94Jk6l3w95W9wCgmv3zZ99V5FReNUytdgJUFUvpvZoqXf72')
-        })
-    })
+      try {
+        firebaseToken = await firebase.messaging().getToken()
+      } catch (error) {
+        console.log(error)
+        return resolve(firebaseToken)
+      }
+      return resolve(firebaseToken)
+    } catch (err) {
+      console.log(err)
+      return resolve(firebaseToken)
+    }
   });
 };
 
@@ -94,11 +95,9 @@ export const GetPermission = async props => {
       customData,
       geofenceWatch
     } = props;
-    const [location, respToken] = await Promise.all([
-      geoFence(geofenceWatch),
-      getFirebaseAccess()
-    ]);
-    const { coords } = location;
+    const respToken = await getFirebaseAccess()
+    const location = await geoFence(geofenceWatch)
+    const { coords } = location; 
 
     const locales = RNLocalize.getLocales();
 
