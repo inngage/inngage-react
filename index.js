@@ -25,7 +25,7 @@ const getFirebaseAccess = () => {
       }
     })
     try {
-      await firebase.messaging().registerForRemoteNotifications()
+      await firebase.messaging().registerDeviceForRemoteMessages()
       const permission = await firebase.messaging().hasPermission()
       if(!permission) {
         try {
