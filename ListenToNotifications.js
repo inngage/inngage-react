@@ -69,10 +69,6 @@ export const openRichNotification = (notificationData) => {
   //Rich push code
 }
 export default async ({ appToken, dev }) => {
-  firebase.messaging().onMessage(async (remoteNotification) => {
-    // É necessário retornar o unsubscribe
-    openCommonNotification({appToken, dev, remoteNotification, state: 'Foreground'})
-  })
   firebase.messaging().onNotificationOpenedApp(async (remoteNotification) => {
     openCommonNotification({appToken, dev, remoteNotification, state: 'Background/Quit'})
   })
