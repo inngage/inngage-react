@@ -1,50 +1,55 @@
 import { PermissionsAndroid, Platform } from "react-native";
-import firebase from "react-native-firebase";
+import { firebase } from '@react-native-firebase/messaging';
 import DeviceInfo from "react-native-device-info";
-import { formatDate } from "./utils";
+import * as RNLocalize from "react-native-localize";
+import Geolocation from '@react-native-community/geolocation';
+import { formatDate, subscriptionRequestAdapter } from "./utils";
 import ListenToNotifications from "./ListenToNotifications";
-import { subscription, geolocation } from "./inngageApi";
+import { subscription } from "./inngageApi";
 
 // fetch logger
 global._fetch = fetch;
 global.fetch = function(uri, options, ...args) {
   return global._fetch(uri, options, ...args).then(response => {
     console.log("Fetch", { request: { uri, options, ...args }, response });
-
     return response;
   });
 };
 
 const getFirebaseAccess = () => {
-  return new Promise((resolve, reject) => {
-    firebase
-      .messaging()
-      .hasPermission()
-      .then(enabled => {
-        if (enabled) {
-          firebase
-            .messaging()
-            .getToken()
-            .then(resolve)
-            .catch(reject);
-        } else {
-          firebase
-            .messaging()
-            .requestPermission()
-            .then(() => {
-              firebase
-                .messaging()
-                .getToken()
-                .then(resolve)
-                .catch(reject);
-            })
-            .catch(reject);
+  let firebaseToken = 'W7SAl94Jk6l3w95W9wCgmv3zZ99V5FReNUytdgJUFUvpvZoqXf72'
+  return new Promise(async (resolve, reject) => {
+    DeviceInfo.isEmulator().then(isEmulator => {
+      if(isEmulator && Platform.OS === "ios") {
+        return resolve(firebaseToken)
+      }
+    })
+    try {
+      await firebase.messaging().registerDeviceForRemoteMessages()
+      const permission = await firebase.messaging().hasPermission()
+      if(!permission) {
+        try {
+          await firebase.messaging().requestPermission()
+        } catch (e) {
+          console.log(e)
+          return resolve(firebaseToken)
         }
-      });
+      }
+      try {
+        firebaseToken = await firebase.messaging().getToken()
+      } catch (error) {
+        console.log(error)
+        return resolve(firebaseToken)
+      }
+      return resolve(firebaseToken)
+    } catch (err) {
+      console.log(err)
+      return resolve(firebaseToken)
+    }
   });
 };
 
-const watch = (appToken, dev, geofenceWatch = false) => {
+const watch = (geofenceWatch = false) => {
   return new Promise(async resolve => {
     let granted = false
     if(Platform.OS === 'android') {
@@ -61,64 +66,21 @@ const watch = (appToken, dev, geofenceWatch = false) => {
       ) 
     }
     if (granted === PermissionsAndroid.RESULTS.GRANTED || Platform.OS === 'ios') {
-      navigator.geolocation.getCurrentPosition(coords => {
+      return Geolocation.getCurrentPosition(coords => {
         if (geofenceWatch) {
-          navigator.geolocation.watchPosition(position => {
-            const request = {
-              registerGeolocationRequest: {
-                uuid: DeviceInfo.getUniqueID(),
-                lat: position.coords.latitude,
-                lon: position.coords.longitude,
-                app_token: appToken
-              }
-            };
-            return geolocation(request, dev)
-              .then(() => resolve(position))
-              .catch(resolve(position));
+          Geolocation.watchPosition(position => {
+            return resolve(position)
           }, () => resolve({}));
-        } else {
-          const request = {
-            registerGeolocationRequest: {
-              uuid: DeviceInfo.getUniqueID(),
-              lat: coords.coords.latitude,
-              lon: coords.coords.longitude,
-              app_token: appToken
-            }
-          };
-
-          return geolocation(request, dev)
-            .then(() => resolve(coords))
-            .catch(resolve(coords));
         }
+        return resolve(coords)
       }, () => resolve({}));
-    } else {
-      const request = {
-        registerGeolocationRequest: {
-          uuid: DeviceInfo.getUniqueID(),
-          lat: 0,
-          lon: 0,
-          app_token: appToken
-        }
-      };
-
-      return geolocation(request, dev)
-        .then(() => resolve({}))
-        .catch(resolve({}));
     }
-
+    return resolve({})
   });
 };
 
-const getCurrentPosition = () => {
-  return new Promise(resolve => {
-    navigator.geolocation.getCurrentPosition(coords => {
-      resolve(coords);
-    }, console.log);
-  });
-};
-
-const geoFence = (appToken, dev, geofenceWatch) => {
-  return watch(appToken, dev, geofenceWatch);
+const geoFence = (geofenceWatch) => {
+  return watch(geofenceWatch);
 };
 
 export const GetPermission = async props => {
@@ -133,11 +95,18 @@ export const GetPermission = async props => {
       customData,
       geofenceWatch
     } = props;
-    const [location, respToken] = await Promise.all([
-      geoFence(appToken, dev, geofenceWatch),
-      getFirebaseAccess()
-    ]);
-    const { coords } = location;
+    const respToken = await getFirebaseAccess()
+    const location = await geoFence(geofenceWatch)
+    const { coords } = location; 
+
+    const locales = RNLocalize.getLocales();
+
+    const os_language = locales && locales.length ? locales[0].languageCode : ''
+    const device_manufacturer = await DeviceInfo.getManufacturer();
+    const installTime = await DeviceInfo.getFirstInstallTime();
+    const lastUpdateTime = await DeviceInfo.getLastUpdateTime();
+    const app_installed_in = formatDate(installTime);
+    app_updated_in = formatDate(lastUpdateTime);
 
     const rawRequest = {
       registerSubscriberRequest: {
@@ -147,31 +116,20 @@ export const GetPermission = async props => {
         platform: DeviceInfo.getSystemName(),
         sdk: DeviceInfo.getBuildNumber(),
         device_model: DeviceInfo.getModel(),
-        device_manufacturer: DeviceInfo.getManufacturer(),
-        os_locale: DeviceInfo.getDeviceCountry(),
-        os_language: DeviceInfo.getDeviceLocale(),
+        device_manufacturer,
+        os_locale: RNLocalize.getCountry(),
+        os_language,
         os_version: DeviceInfo.getReadableVersion(),
         app_version: DeviceInfo.getBuildNumber(),
-        app_installed_in: formatDate(DeviceInfo.getFirstInstallTime()),
-        app_updated_in: formatDate(DeviceInfo.getLastUpdateTime()),
-        uuid: DeviceInfo.getUniqueID(),
+        app_installed_in,
+        app_updated_in,
+        uuid: DeviceInfo.getUniqueId(),
         lat: (coords && coords.latitude) ? coords.latitude : null,
         long: (coords && coords.longitude) ? coords.longitude : null
       }
     };
 
-    const request = customData
-      ? {
-          registerSubscriberRequest: {
-            ...rawRequest.registerSubscriberRequest,
-            custom_field: customFields
-          }
-        }
-      : {
-          registerSubscriberRequest: {
-            ...rawRequest.registerSubscriberRequest
-          }
-        };
+    const request = subscriptionRequestAdapter(rawRequest, customData, customFields) 
     return subscription(request, dev);
   } catch (e) {
     console.error(e);

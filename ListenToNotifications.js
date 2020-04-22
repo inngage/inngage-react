@@ -1,6 +1,6 @@
 import { Linking } from 'react-native'
 import InAppBrowser from 'react-native-inappbrowser-reborn'
-import firebase from 'react-native-firebase'
+import { firebase } from '@react-native-firebase/messaging';
 import DeviceInfo from 'react-native-device-info'
 import { showAlert, showAlertLink } from './utils'
 import { notificationApi } from './inngageApi'
@@ -28,109 +28,49 @@ const linkInApp = (link) => {
 
 const openLinkByType = (type, url) => (type === 'deep' ? Linking.openURL(url) : linkInApp(url))
 
-const onMessageListener = () => firebase.messaging().onMessage((message) => {
-  const { _data } = message
-  if(_data && _data.body && _data.title) {
-    showAlert(_data.title, _data.body)
+export const openCommonNotification = (notificationData) => {
+  const { appToken, dev, remoteNotification } = notificationData
+    if(!remoteNotification) {
+    return
   }
-})
-
+  const { data } = remoteNotification
+  if(!data || (data && !Object.keys(data).length)) {
+    return
+  }
+  const { notId, title, body, type, url, picture } = data
+  if(picture) {
+    return openRichNotification(notificationData)
+  }
+  const request = {
+    notificationRequest: {
+      id: notId,
+      app_token: appToken,
+    },
+  }
+  if(!url) {
+    return notificationApi(request, dev).then(() => showAlert(title, body)).catch(console.log)
+  }
+  return Linking.canOpenURL(url).then((supported) => {
+    if (supported) {
+      showAlertLink(
+        title,
+        body,
+        `${DeviceInfo.getApplicationName()}`,
+        `Acessar ${url} ?`,
+      ).then((response) => { supported && openLinkByType(type, url)})
+    }
+    notificationApi(request, dev)
+  }).catch(console.log)
+}
+export const openRichNotification = (notificationData) => {
+    console.log("Rich push", notificationData)
+  //Rich push code
+}
 export default async ({ appToken, dev }) => {
-  firebase.notifications().onNotification((notification) => {
-    const { title, body, type, url, notId } = notification.data
-    const urlTreated = url || 'null'
-    const request = {
-      notificationRequest: {
-        id: notId,
-        app_token: appToken,
-      },
-    }
-
-    Linking.canOpenURL(urlTreated).then((supported) => {
-      if (supported) {
-        showAlertLink(
-          title,
-          body,
-          `${DeviceInfo.getApplicationName()}`,
-          `Can we redirect to ${url} ?`,
-        ).then((response) => {
-          response
-            && notificationApi(request, dev)
-              .then(() => openLinkByType(type, url))
-              .catch(console.log)
-        })
-      } else {
-        notificationApi(request, dev)
-          .then(() => showAlert(title, body))
-          .catch(console.log)
-      }
-    }).catch(console.log)
+  firebase.messaging().onNotificationOpenedApp(async (remoteNotification) => {
+    openCommonNotification({appToken, dev, remoteNotification, state: 'Quit'})
   })
-
-  firebase.notifications().onNotificationOpened((notificationOpen) => {
-    const { title, body, type, url, notId } = notificationOpen.notification.data
-    const urlTreated = url || 'null'
-    const request = {
-      notificationRequest: {
-        id: notId,
-        app_token: appToken,
-      },
-    }
-
-    Linking.canOpenURL(urlTreated).then((supported) => {
-      if (supported) {
-        showAlertLink(
-          title,
-          body,
-          `${DeviceInfo.getApplicationName()}`,
-          `Can we redirect to ${url} ?`,
-        ).then((response) => {
-          if (response) {
-            notificationApi(request, dev)
-              .then(() => openLinkByType(type, url))
-              .catch(console.log)
-          }
-        })
-      } else {
-        notificationApi(request, dev)
-          .then(() => showAlert(title, body))
-          .catch(console.log)
-      }
-    }).catch(console.log)
-  })
-  const notificationOpen = await firebase.notifications().getInitialNotification()
-
-  if (notificationOpen) {
-    const { title, body, type, url, notId } = notificationOpen.notification.data
-    const urlTreated = url || 'null'
-    const request = {
-      notificationRequest: {
-        id: notId,
-        app_token: appToken,
-      },
-    }
-
-    Linking.canOpenURL(urlTreated).then((supported) => {
-      if (supported) {
-        showAlertLink(
-          title,
-          body,
-          `${DeviceInfo.getApplicationName()}`,
-          `Can we redirect to ${url} ?`,
-        ).then((response) => {
-          if (response) {
-            notificationApi(request, dev)
-              .then(() => openLinkByType(type, url))
-              .catch(console.error)
-          }
-        })
-      } else {
-        notificationApi(request, dev)
-          .then(() => showAlert(title, body))
-          .catch(console.log)
-      }
-    })
-  }
-
-  onMessageListener()
+  firebase.messaging().getInitialNotification().then(remoteNotification => {
+    openCommonNotification({appToken, dev, remoteNotification, state: 'Background'})
+  });
 }
