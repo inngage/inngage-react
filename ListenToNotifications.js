@@ -60,7 +60,6 @@ export const openCommonNotification = (notificationData) => {
       ).then((response) => { supported && openLinkByType(type, url)})
     }
     notificationApi(request, dev)
-    return showAlert(title, body)
   }).catch(console.log)
 }
 export const openRichNotification = (notificationData) => {
