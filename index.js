@@ -20,7 +20,7 @@ const getFirebaseAccess = () => {
   let firebaseToken = 'W7SAl94Jk6l3w95W9wCgmv3zZ99V5FReNUytdgJUFUvpvZoqXf72'
   return new Promise(async (resolve, reject) => {
     DeviceInfo.isEmulator().then(isEmulator => {
-      if(isEmulator) {
+      if(isEmulator && Platform.OS === "ios") {
         return resolve(firebaseToken)
       }
     })
@@ -29,7 +29,7 @@ const getFirebaseAccess = () => {
       const permission = await firebase.messaging().hasPermission()
       if(!permission) {
         try {
-        await firebase.messaging().requestPermission()
+          await firebase.messaging().requestPermission()
         } catch (e) {
           console.log(e)
           return resolve(firebaseToken)

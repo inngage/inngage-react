@@ -29,7 +29,6 @@ const linkInApp = (link) => {
 const openLinkByType = (type, url) => (type === 'deep' ? Linking.openURL(url) : linkInApp(url))
 
 export const openCommonNotification = (notificationData) => {
-  console.log({notificationData})
   const { appToken, dev, remoteNotification } = notificationData
     if(!remoteNotification) {
     return
@@ -70,9 +69,9 @@ export const openRichNotification = (notificationData) => {
 }
 export default async ({ appToken, dev }) => {
   firebase.messaging().onNotificationOpenedApp(async (remoteNotification) => {
-    openCommonNotification({appToken, dev, remoteNotification, state: 'Background/Quit'})
+    openCommonNotification({appToken, dev, remoteNotification, state: 'Quit'})
   })
   firebase.messaging().getInitialNotification().then(remoteNotification => {
-    openCommonNotification({appToken, dev, remoteNotification, state: 'Background/Quit'})
+    openCommonNotification({appToken, dev, remoteNotification, state: 'Background'})
   });
 }
