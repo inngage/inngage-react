@@ -1,5 +1,5 @@
-import { PermissionsAndroid, Platform } from "react-native";
-import { firebase } from '@react-native-firebase/messaging';
+import { PermissionsAndroid, Platform, Alert } from "react-native";
+import { firebase, messaging } from '@react-native-firebase/messaging';
 import DeviceInfo from "react-native-device-info";
 import * as RNLocalize from "react-native-localize";
 import Geolocation from '@react-native-community/geolocation';
@@ -86,7 +86,7 @@ const Inngage = () =>
     return watch(geofenceWatch);
   };
 
-  export const GetPermission = async props => {
+  const GetPermission = async props => {
     try {
       ListenToNotifications(props);
 
