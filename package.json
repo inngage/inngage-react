@@ -1,6 +1,6 @@
 {
   "name": "@inngageregistry/inngage-react",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "description": "Inngage react integration",
   "main": "index.js",
   "scripts": {
@@ -16,12 +16,5 @@
     "url": "https://github.com/inngage/inngage-react/issues"
   },
   "homepage": "https://github.com/inngage/inngage-react#readme",
-  "dependencies": {
-    "@react-native-community/geolocation": "^2.0.2",
-    "@react-native-firebase/app": "^8.4.5",
-    "@react-native-firebase/messaging": "^7.8.11",
-    "react-native-device-info": "^6.1.0",
-    "react-native-inappbrowser-reborn": "^3.4.0",
-    "react-native-localize": "^1.4.2"
-  }
+  "dependencies": {}
 }
