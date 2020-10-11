@@ -260,7 +260,7 @@ export const Inapp = (props) => {
               <Text style={[itemStyles.btn_left_title, props.buttonTitleLeftStyle]}>{msg.btn_left_txt}</Text>
             </View>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => ScrollRef1.current.scrollTo({ x: 220, y: 0, animated: true })} style={[itemStyles.btn_right, props.button_right]}>
+          <TouchableOpacity onPress={() => handleButton(msg.title, msg.body, msg.btn_right_action_link, msg.btn_right_action_type)} style={[itemStyles.btn_right, props.button_right]}>
             <View>
               <Text style={[itemStyles.btn_right_title, props.buttonTitleRightStyle]}>{msg.btn_right_txt}</Text>
             </View>
