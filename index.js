@@ -1,14 +1,16 @@
-import { firebase } from '@react-native-firebase/messaging';
-import InAppBrowser from 'react-native-inappbrowser-reborn'
+import messaging, { firebase } from '@react-native-firebase/messaging';
 import DeviceInfo from "react-native-device-info";
 import * as RNLocalize from "react-native-localize";
-import { formatDate, subscriptionRequestAdapter, showAlertLink } from "./utils";
-import ListenToNotifications, { linkInApp } from "./ListenToNotifications";
-import { subscription,notificationApi } from "./inngageApi";
+import Geolocation from '@react-native-community/geolocation';
+import { formatDate, subscriptionRequestAdapter } from "./utils";
+import ListenToNotifications from "./ListenToNotifications";
+import { subscription } from "./inngageApi";
 import AsyncStorage from '@react-native-community/async-storage';
 import Carousel, { Pagination } from 'react-native-snap-carousel';
+import PropTypes from 'prop-types';
 import React, { useState, useEffect, useRef } from 'react';
 import {
+  PermissionsAndroid,
   Platform,
   Modal,
   View,
@@ -21,8 +23,7 @@ import {
   LogBox,
   AppRegistry,
   ScrollView,
-  ImageBackground,
-  Linking
+  ImageBackground
 } from "react-native";
 
 
@@ -30,15 +31,13 @@ import {
 
 
 const SLIDER_WIDTH = Dimensions.get('window').width;
-const SLIDER_HEIGHT = Dimensions.get('window').height;
-const ITEM_WIDTH = Math.round(SLIDER_WIDTH * 0.8);
-const ITEM_HEIGHT = Math.round(SLIDER_HEIGHT * 0.8);
+const ITEM_WIDTH = Math.round(SLIDER_WIDTH * 0.7);
+const ITEM_HEIGHT = Math.round(ITEM_WIDTH * 3 / 4);
 
 export const Inapp = (props) => {
   const [data, setData] = useState([])
   const [ind, setInd] = useState(0)
   const [visible, setVisible] = useState(true)
-  const [bgImage, setbgImage] = useState(undefined)
 
   pagination = () => {
     return (
@@ -62,126 +61,29 @@ export const Inapp = (props) => {
   }
 
   _renderItem = ({ item, index }) => {
-    let msg = JSON.parse(item.data.additional_data)
-    let arrayImgs = []
-
-    const handleButton = (title,body,url,type) => {
-      console.log(title,body,url,type)
-      const openLinkByType = (type, url) => (type === 'deep' ? Linking.openURL(url) : linkInApp(url))
-      
-      return Linking.canOpenURL(url).then((supported) => {
-        if (supported) {
-          showAlertLink(
-            title,
-            body,
-            `${DeviceInfo.getApplicationName()}`,
-            `Acessar ${url} ?`,
-          ).then((response) => { supported && openLinkByType(type, url) })
-        }
-      }).catch(console.log)
-    }
-
-    const imgCarosel = () => {
-      if (msg.rich_content.carousel == true) {
-        if (msg.rich_content.img1 != '') {
-          arrayImgs.push({ url: msg.rich_content.img1 })
-        }
-        if (msg.rich_content.img2 != '') {
-          arrayImgs.push({ url: msg.rich_content.img2 })
-        }
-        if (msg.rich_content.img3 != '') {
-          arrayImgs.push({ url: msg.rich_content.img3 })
-        }
-        let arrayElements = arrayImgs.map((item,index )=> (
-          <Image key={index.toString()} style={[props.mediaStyle, { width: 200, height: 200, marginBottom: 10 }]} source={{ uri: item.url }} />
-        ));
-        return arrayElements
-      } else if (arrayImgs.length <= 0) {
-        return (
-          <Image style={[props.mediaStyle, { width: 200, height: 200 }]} source={{ uri: item.data.picture }} />
-        )
-      }
-      else {
-        return (
-          <Image style={[props.mediaStyle, { width: 200, height: 200 }]} source={{ uri: item.data.picture }} />
-        )
-      }
-    }
-    const checkBG = () => {
-      if (msg.background_img != '') {
-        return null
-      } else {
-        return msg.background_color
-      }
-    }
-    const itemStyles = StyleSheet.create({
-      btn_left: {
-        backgroundColor: msg.btn_left_bg_color,
-        height: 40,
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 20,
-      },
-      btn_right: {
-        backgroundColor: msg.btn_right_bg_color,
-        height: 40,
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 20,
-      },
-      btn_left_title: {
-        color: msg.btn_left_txt_color
-      },
-      btn_right_title: {
-        color: msg.btn_right_txt_color
-      },
-      body: {
-        backgroundColor: checkBG(),
-        width: '100%',
-        alignSelf: 'stretch',
-        alignItems: 'center',
-        justifyContent: 'center',
-      },
-      bodyText: {
-        color: msg.body_font_color,
-        textAlign: 'justify',
-        marginTop: 10,
-        fontSize: 15,
-      },
-      title: {
-        color: msg.title_font_color,
-        fontWeight: "bold",
-        fontSize: 18,
-        marginBottom: 10
-      }
-    });
+    console.log(item)
     return (
-      <View style={[itemStyles.body]}>
-        <Text style={[itemStyles.title, props.titleStyle]}>{msg.title}</Text>
-        <ScrollView style={{ height: 200 }}>
-          {imgCarosel()}
-        </ScrollView>
-        <Text style={[itemStyles.bodyText, props.bodyStyle]}>{msg.body}</Text>
+      <ScrollView contentContainerStyle={[props.itemStyle, styles.itemContainer]}>
+        <Text style={[styles.itemTitle, props.titleStyle]}>{item.notification.title}</Text>
+        <Image style={[props.mediaStyle, { width: 200, height: 200 }]} source={{ uri: 'https://cdn.jpegmini.com/user/images/slider_puffin_jpegmini.jpg' }} />
+        <Text style={[styles.itemBody, props.bodyStyle]}>Corpo da mensagem</Text>
         <Text style={[styles.counter, props.counterStyle]}>
           {ind + 1} de {data.length} Mensagens
-            </Text>
+        </Text>
         {/* {pagination()} */}
-        <View style={{ flexDirection: "row", marginBottom: 10 }}>
-          <TouchableOpacity onPress={()=> handleButton(msg.title, msg.body,msg.btn_left_action_link,msg.btn_left_action_type)} style={[itemStyles.btn_left, props.buttonTitleRightStyle]}>
+        <View style={{ flexDirection: "row" }}>
+          <TouchableOpacity style={{ height: 40, flex: 1, backgroundColor: 'green', alignItems: 'center', justifyContent: 'center' }}>
             <View>
-              <Text style={[itemStyles.btn_left_title, props.buttonTitleLeftStyle]}>{msg.btn_left_txt}</Text>
+              <Text>{props.leftButtonTitle}</Text>
             </View>
           </TouchableOpacity>
-          <TouchableOpacity onPress={()=> handleButton(msg.title, msg.body,msg.btn_left_action_link,msg.btn_left_action_type)} style={[itemStyles.btn_right, props.button_right]}>
+          <TouchableOpacity style={{ height: 40, flex: 1, backgroundColor: 'red', alignItems: 'center', justifyContent: 'center' }}>
             <View>
-              <Text style={[itemStyles.btn_right_title, props.buttonTitleRightStyle]}>{msg.btn_right_txt}</Text>
+              <Text>{props.rightButtonTitle}</Text>
             </View>
           </TouchableOpacity>
         </View>
-
-      </View>
+      </ScrollView>
     );
   }
 
@@ -193,39 +95,27 @@ export const Inapp = (props) => {
 
   onLoad = async () => {
     let temp = []
-    const messages = JSON.parse(await AsyncStorage.getItem('inngage'))
+    const messages = JSON.parse(await AsyncStorage.getItem('messages'))
     if (messages !== null) {
       messages.forEach((el, index) => {
         if (!isEmpty(el)) {
           temp.push(el)
         }
       })
-      let msg = JSON.parse(temp[0].data.additional_data)
-      if (msg.background_img != '') {
-        setbgImage({ uri: msg.background_img })
-      } else {
-        setbgImage(undefined)
-      }
-      setData(temp)
+      setData(messages)
     }
+    console.log(data)
   }
 
   handleClose = async () => {
     if (props.onClose) {
+      console.log('hand')
       if (props.onClose.toLowerCase() === 'clear') {
-        await AsyncStorage.removeItem('inngage');
+        console.log('clear')
+        await AsyncStorage.removeItem('messages');
       }
     }
     setVisible(false)
-  }
-
-  handleBg = index => {
-    let msg = JSON.parse(data[index].data.additional_data)
-    if (msg.background_img != '') {
-      setbgImage({ uri: msg.background_img })
-    } else {
-      setbgImage(undefined)
-    }
   }
 
   if (data.length > 0) {
@@ -237,34 +127,29 @@ export const Inapp = (props) => {
         style={{ flex: 1 }}
       >
         <View style={[styles.styleContainer, props.styleContainer]}>
-          <ImageBackground style={{ widht: '100%', alignItems: 'center' }} imageStyle={{borderRadius:10}} source={bgImage}>
-            <TouchableHighlight
-              onPress={() => handleClose()}
-              underlayColor='#cccccc'
-              style={styles.closeButton}
-            >
+          <TouchableHighlight
+            onPress={() => handleClose()}
+            underlayColor='#cccccc'
+            style={styles.closeButton}
+          >
+            <View>
               <Text style={{ fontWeight: 'bold' }}>
                 X
-            </Text>
-            </TouchableHighlight>
-            <Carousel
-              style={{ alignSelf: 'stretch' }}
-              ref={CarouselRef}
-              layout={'default'}
-              layoutCardOffset={10}
-              data={data}
-              inactiveSlideOpacity={0}
-              containerCustomStyle={styles.carouselContainer}
-              inactiveSlideShift={0}
-              onSnapToItem={(index) => {
-                setInd(index);
-                handleBg(index)
-              }}
-              renderItem={_renderItem}
-              sliderWidth={SLIDER_WIDTH}
-              itemWidth={ITEM_WIDTH}
-            />
-          </ImageBackground>
+                </Text>
+            </View>
+          </TouchableHighlight>
+          <Carousel
+            ref={CarouselRef}
+            layout={'tinder'}
+            layoutCardOffset={10}
+            data={data}
+            containerCustomStyle={styles.carouselContainer}
+            inactiveSlideShift={0}
+            onSnapToItem={(index) => setInd(index)}
+            renderItem={_renderItem}
+            sliderWidth={SLIDER_WIDTH}
+            itemWidth={ITEM_WIDTH}
+          />
         </View>
       </Modal>
     );
@@ -276,13 +161,25 @@ export const Inapp = (props) => {
 const styles = StyleSheet.create({
   carouselContainer: {
     width: "100%",
-    marginTop: 10,
+    marginTop: 10
   },
   styleContainer: {
     backgroundColor: 'white',
+    margin: 20,
+    alignItems: 'center',
     elevation: 10,
-    borderRadius: 10,
-    margin: 20
+    borderRadius: 5
+  },
+  itemContainer: {
+    width: '100%',
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'white'
+  },
+  itemLabel: {
+    color: 'white',
+    fontSize: 24
   },
   counter: {
     alignSelf: 'center',
@@ -297,17 +194,20 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#f2f2f2',
     justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 9999
+    alignItems: 'center'
   },
+  itemTitle: {
+    fontWeight: 'bold',
+    marginBottom: 10
+  }
 });
 
 
-// Inapp.propTypes = {
-//   onClose: PropTypes.string,
-//   leftButtonTitle: PropTypes.string.isRequired,
-//   rightButtonTitle: PropTypes.string.isRequired,
-// };
+Inapp.propTypes = {
+  onClose: PropTypes.string,
+  leftButtonTitle: PropTypes.string.isRequired,
+  rightButtonTitle: PropTypes.string.isRequired,
+};
 
 
 function isEmpty(obj) {
@@ -375,13 +275,75 @@ const getFirebaseAccess = () => {
   });
 };
 
+// ------------  GeoFence ------------------//
+const geoFence = (geofenceWatch) => {
+  return watch(geofenceWatch);
+};
+
+// ------------  Watch ------------------//
+const watch = (geofenceWatch = false) => {
+  return new Promise(async resolve => {
+    let granted = false
+    if (Platform.OS === 'android') {
+      granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        {
+          title: "Localização",
+          message:
+            "Permitir localização",
+          buttonNeutral: "Perguntar depois",
+          buttonNegative: "Não",
+          buttonPositive: "Sim"
+        }
+      )
+    }
+    if (granted === PermissionsAndroid.RESULTS.GRANTED || Platform.OS === 'ios') {
+      return Geolocation.getCurrentPosition(coords => {
+        if (geofenceWatch) {
+          Geolocation.watchPosition(position => {
+            return resolve(position)
+          }, () => resolve({}));
+        }
+        return resolve(coords)
+      }, () => resolve({}));
+    }
+    return resolve({})
+  });
+};
 
 const Inngage = {
+  // ------------  Init Firebase Message Handle ------------------//
+  init: () => {
+    AppRegistry.registerHeadlessTask('ReactNativeFirebaseMessagingHeadlessTask', () => backgroundNotificationHandler)
+    LogBox.ignoreLogs(['registerHeadlessTask'])
+    var messageArray = [];
+
+    messaging().setBackgroundMessageHandler(async (remoteMessage) => {
+      console.log('Push received')
+
+      const currentMessages = await AsyncStorage.getItem('messages');
+      if (currentMessages !== null) {
+        messageArray = JSON.parse(currentMessages);
+      }
+      messageArray.push(remoteMessage);
+      await AsyncStorage.setItem('messages', JSON.stringify(messageArray));
+    });
+
+    messaging().onMessage(async (remoteMessage) => {
+      console.log('Push received')
+
+      const currentMessages = await AsyncStorage.getItem('messages');
+      if (currentMessages !== null) {
+        messageArray = JSON.parse(currentMessages);
+      }
+      messageArray.push(remoteMessage);
+      await AsyncStorage.setItem('messages', JSON.stringify(messageArray));
+    });
+  },
+
   // ------------  Get Permission ------------------//
   GetPermission: async (props) => {
     try {
-      AppRegistry.registerHeadlessTask('ReactNativeFirebaseMessagingHeadlessTask', () => backgroundNotificationHandler)
-      LogBox.ignoreLogs(['registerHeadlessTask'])
       ListenToNotifications(props);
 
       const {
@@ -390,8 +352,11 @@ const Inngage = {
         friendlyIdentifier,
         customFields,
         customData,
+        geofenceWatch
       } = props;
       const respToken = await getFirebaseAccess()
+      const location = await geoFence(geofenceWatch)
+      const { coords } = location;
 
       const locales = RNLocalize.getLocales();
 
@@ -418,6 +383,8 @@ const Inngage = {
           app_installed_in,
           app_updated_in,
           uuid: DeviceInfo.getUniqueId(),
+          lat: (coords && coords.latitude) ? coords.latitude : null,
+          long: (coords && coords.longitude) ? coords.longitude : null
         }
       };
 
@@ -427,7 +394,7 @@ const Inngage = {
       console.error(e);
       return { subscribed: false };
     }
-  },
+  },  
 }
 
 
