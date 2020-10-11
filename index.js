@@ -52,7 +52,6 @@ export const Inapp = (props) => {
     let msg = JSON.parse(item.data.additional_data)
     let arrayImgs = []
     let indImg = 0
-    console.log(index)
     chooseRef = () => {
       if (index == 0) {
         return ScrollRef1
@@ -196,7 +195,8 @@ export const Inapp = (props) => {
       body: {
         backgroundColor: checkBG(),
         width: '100%',
-        alignSelf: 'stretch',
+        height: 450,
+        alignSelf: 'center',
         alignItems: 'center',
         justifyContent: 'center',
       },
@@ -205,12 +205,13 @@ export const Inapp = (props) => {
         textAlign: 'justify',
         marginBottom: 10,
         fontSize: 15,
+        marginHorizontal: 10
       },
       title: {
         color: msg.title_font_color,
         fontWeight: "bold",
         fontSize: 18,
-        marginBottom: 10
+        marginTop: 40
       }
     });
     return (
@@ -222,7 +223,8 @@ export const Inapp = (props) => {
           snapToInterval={220}
           decelerationRate="fast"
           showsHorizontalScrollIndicator={false}
-          style={{ width: 200 }}
+          style={{ width: 200, height: 240 }}
+          contentContainerStyle={{ alignItems: 'center', justifyContent: 'center' }}
           onMomentumScrollEnd={(e) => {
             if (Math.round(e.nativeEvent.contentOffset.x) === 0
             ) {
@@ -243,7 +245,11 @@ export const Inapp = (props) => {
         >
           {imgCarosel()}
         </ScrollView>
-        {pagination(chooseRef())}
+        {
+          msg.rich_content.carousel == true ?
+            pagination(chooseRef()) : null
+
+        }
         <Text style={[itemStyles.bodyText, props.bodyStyle]}>{msg.body}</Text>
         {/* <Text style={[styles.counter, props.counterStyle]}>
           {ind + 1} de {data.length} Mensagens
@@ -315,7 +321,7 @@ export const Inapp = (props) => {
           style={{ justifyContent: 'center', alignItems: 'center', backgroundColor: 'blue' }}
         ><View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
             <View style={[styles.styleContainer, props.styleContainer]}>
-              <ImageBackground style={{ widht: '100%' }} imageStyle={{ borderRadius: 10, alignSelf: 'center' }} source={bgImage}>
+              <ImageBackground style={{ widht: '100%', alignItems: 'center', justifyContent: 'center' }} resizeMode='cover' imageStyle={{ borderRadius: 10, alignSelf: 'stretch', height: 480 }} source={bgImage}>
                 <TouchableHighlight
                   onPress={() => handleClose()}
                   underlayColor='#cccccc'
@@ -333,14 +339,15 @@ export const Inapp = (props) => {
                   data={data}
                   inactiveSlideOpacity={0}
                   containerCustomStyle={styles.carouselContainer}
+                  contentContainerCustomStyle={{ justifyContent: 'center' }}
                   inactiveSlideShift={0}
                   onSnapToItem={(index) => {
                     setInd(index);
                     handleBg(index)
                   }}
                   renderItem={(item, index) => _renderItem(item, index, CarouselRef)}
-                  sliderHeight={SLIDER_WIDTH}
-                  itemHeight={ITEM_WIDTH}
+                  sliderHeight={500}
+                  itemHeight={500}
                 />
               </ImageBackground>
             </View>
@@ -363,6 +370,7 @@ const styles = StyleSheet.create({
     elevation: 10,
     borderRadius: 10,
     width: SLIDER_WIDTH * 0.8,
+    height: 480,
   },
   counter: {
     alignSelf: 'center',
