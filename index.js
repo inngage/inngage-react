@@ -52,6 +52,72 @@ export const Inapp = (props) => {
     let msg = JSON.parse(item.data.additional_data)
     let arrayImgs = []
     let indImg = 0
+
+    const checkBG = () => {
+      if (msg.background_img != '') {
+        return null
+      } else {
+        return msg.background_color
+      }
+    }
+
+    const itemStyles = StyleSheet.create({
+      btn_left: {
+        backgroundColor: msg.btn_left_bg_color || "#FFFFFF",
+        height: 40,
+        width: 100,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 20,
+        marginLeft: 10,
+        flex: 1
+      },
+      btn_right: {
+        backgroundColor: msg.btn_right_bg_color || "#FFFFFF",
+        height: 40,
+        width: 100,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 10,
+        flex: 1
+      },
+      btn_left_title: {
+        color: msg.btn_left_txt_color || "#000000"
+      },
+      btn_right_title: {
+        color: msg.btn_right_txt_color || "#000000"
+      },
+      body: {
+        backgroundColor: checkBG(),
+        width: '100%',
+        height: 450,
+        alignSelf: 'center',
+        alignItems: 'center',
+        justifyContent: 'center',
+      },
+      bodyText: {
+        color: msg.body_font_color || "#000000",
+        textAlign: 'justify',
+        marginBottom: 10,
+        fontSize: 15,
+        marginHorizontal: 10
+      },
+      title: {
+        color: msg.title_font_color || "#000000",
+        fontWeight: "bold",
+        fontSize: 18,
+        marginTop: 40
+      },
+      dot: {
+        backgroundColor: msg.dot_color || "#FFFFFF",
+        borderRadius: 100,
+        width: 8,
+        height: 8,
+        marginLeft: 5,
+        elevation: 5,
+      }
+    });
+
     chooseRef = () => {
       if (index == 0) {
         return ScrollRef1
@@ -93,13 +159,7 @@ export const Inapp = (props) => {
                     }
                   }}
                   key={i.toString()}
-                  style={{
-                    backgroundColor: 'white',
-                    borderRadius: 100,
-                    width: size,
-                    height: size,
-                    marginLeft: 5
-                  }}
+                  style={[itemStyles.dot, {width: size, height: size}]}
                 />
               )
             }
@@ -156,64 +216,7 @@ export const Inapp = (props) => {
           <Image style={[props.mediaStyle, { width: 200, height: 200 }]} source={{ uri: item.data.picture }} />
         )
       }
-    }
-    const checkBG = () => {
-      if (msg.background_img != '') {
-        return null
-      } else {
-        return msg.background_color
-      }
-    }
-    const itemStyles = StyleSheet.create({
-      btn_left: {
-        backgroundColor: msg.btn_left_bg_color,
-        height: 40,
-        width: 100,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 20,
-        marginRight: 20,
-        marginLeft: 10,
-        flex: 1
-      },
-      btn_right: {
-        backgroundColor: msg.btn_right_bg_color,
-        height: 40,
-        width: 100,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 20,
-        marginRight: 10,
-        flex: 1
-      },
-      btn_left_title: {
-        color: msg.btn_left_txt_color
-      },
-      btn_right_title: {
-        color: msg.btn_right_txt_color
-      },
-      body: {
-        backgroundColor: checkBG(),
-        width: '100%',
-        height: 450,
-        alignSelf: 'center',
-        alignItems: 'center',
-        justifyContent: 'center',
-      },
-      bodyText: {
-        color: msg.body_font_color,
-        textAlign: 'justify',
-        marginBottom: 10,
-        fontSize: 15,
-        marginHorizontal: 10
-      },
-      title: {
-        color: msg.title_font_color,
-        fontWeight: "bold",
-        fontSize: 18,
-        marginTop: 40
-      }
-    });
+    }        
     return (
       <View style={[itemStyles.body]}>
         <Text style={[itemStyles.title, props.titleStyle]}>{msg.title}</Text>
@@ -255,12 +258,12 @@ export const Inapp = (props) => {
           {ind + 1} de {data.length} Mensagens
         </Text> */}
         <View style={{ flexDirection: "row", marginBottom: 0, justifyContent: 'center' }}>
-          <TouchableOpacity onPress={() => handleButton(msg.title, msg.body, msg.btn_left_action_link, msg.btn_left_action_type)} style={[itemStyles.btn_left, props.buttonTitleRightStyle]}>
+          <TouchableOpacity onPress={() => handleButton(msg.title, msg.body, msg.btn_left_action_link, msg.btn_left_action_type)} style={[itemStyles.btn_left, props.buttonLeftStyle]}>
             <View>
               <Text style={[itemStyles.btn_left_title, props.buttonTitleLeftStyle]}>{msg.btn_left_txt}</Text>
             </View>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleButton(msg.title, msg.body, msg.btn_right_action_link, msg.btn_right_action_type)} style={[itemStyles.btn_right, props.button_right]}>
+          <TouchableOpacity onPress={() => handleButton(msg.title, msg.body, msg.btn_right_action_link, msg.btn_right_action_type)} style={[itemStyles.btn_right, props.buttonRightStyle]}>
             <View>
               <Text style={[itemStyles.btn_right_title, props.buttonTitleRightStyle]}>{msg.btn_right_txt}</Text>
             </View>
@@ -294,11 +297,11 @@ export const Inapp = (props) => {
   }
 
   handleClose = async () => {
-    if (props.onClose) {
-      if (props.onClose.toLowerCase() === 'clear') {
-        await AsyncStorage.removeItem('inngage');
-      }
-    }
+    // if (props.onClose) {
+    //   if (props.onClose.toLowerCase() === 'clear') {
+    //     await AsyncStorage.removeItem('inngage');
+    //   }
+    // }
     setVisible(false)
   }
 
@@ -327,7 +330,7 @@ export const Inapp = (props) => {
                   underlayColor='#cccccc'
                   style={styles.closeButton}
                 >
-                  <Text style={{ fontWeight: 'bold' }}>
+                  <Text style={{ fontWeight: 'bold', color:'#ffffff' }}>
                     X
                   </Text>
                 </TouchableHighlight>
@@ -378,16 +381,16 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: 'absolute',
-    elevation: 10,
     alignSelf: 'flex-end',
     right: 20,
     top: 20,
     width: 30,
     height: 30,
     borderRadius: 20,
-    backgroundColor: '#f2f2f2',
+    backgroundColor: '#00000020',
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex:90,
   },
 });
 
