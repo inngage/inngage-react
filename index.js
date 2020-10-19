@@ -471,13 +471,13 @@ const getFirebaseAccess = () => {
 const Inngage = {
   // ------------  Get Permission ------------------//
   GetPermission: async (props) => {
+    try{
+      LogBox.ignoreLogs(['registerHeadlessTask'])
+      console.ignoredYellowBox = ['registerHeadlessTask'];
+    } catch(e){
+    }
     try {
       AppRegistry.registerHeadlessTask('ReactNativeFirebaseMessagingHeadlessTask', () => backgroundNotificationHandler)
-      if(typeof LogBox !== undefined){
-        LogBox.ignoreLogs(['registerHeadlessTask'])
-      }else {
-        console.ignoredYellowBox = ['registerHeadlessTask'];
-      }
       ListenToNotifications(props);
 
       const {
