@@ -473,9 +473,10 @@ const Inngage = {
   GetPermission: async (props) => {
     try{
       LogBox.ignoreLogs(['registerHeadlessTask'])
+    } catch(e){}
+    try{
       console.ignoredYellowBox = ['registerHeadlessTask'];
-    } catch(e){
-    }
+    } catch(e){}
     try {
       AppRegistry.registerHeadlessTask('ReactNativeFirebaseMessagingHeadlessTask', () => backgroundNotificationHandler)
       ListenToNotifications(props);
