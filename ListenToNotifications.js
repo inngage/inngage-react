@@ -104,13 +104,15 @@ export default async ({ appToken, dev }) => {
   //   openCommonNotification({ appToken, dev, remoteMessage, state: 'Background' })
   // });
 
-  firebase.messaging().onMessage(async (remoteMessage) => {
-    console.log('Push received: Foreground')
+  firebase.messaging().onNotificationOpenedApp(async (remoteMessage) => {
+    openCommonNotification({ appToken, dev, remoteMessage, state: 'Background' })
+  });
+
+  firebase.messaging().onMessage(async (remoteMessage) => {    console.log('Push received: Foreground')
+
+  if (remoteMessage != null && remoteMessage.data.additional_data) {  
     let msg = JSON.parse(remoteMessage.data.additional_data)
-    if (remoteMessage != null && remoteMessage.data.additional_data) {  
-      console.log('first step')
       if (msg.inapp_message == true) {
-        console.log('second step')
         const currentMessages = await AsyncStorage.getItem('inngage');
         if (currentMessages !== null) {
           messageArray = JSON.parse(currentMessages);
@@ -118,8 +120,11 @@ export default async ({ appToken, dev }) => {
         messageArray.push(remoteMessage);
         await AsyncStorage.setItem('inngage', JSON.stringify(messageArray));
       }
+    } else if (remoteMessage != null && !remoteMessage.data.additional_data) {
+      console.log(remoteMessage.data.title)
+        showAlert(remoteMessage.data.title, remoteMessage.data.body)
     }
-    openCommonNotification({ appToken, dev, remoteMessage, state: 'Background' })
+    openCommonNotification({ appToken, dev, remoteMessage, state: 'foreground' })
   });
 
   firebase.messaging().setBackgroundMessageHandler(async (remoteMessage) => {
