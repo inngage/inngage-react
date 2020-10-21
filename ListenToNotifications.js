@@ -1,6 +1,6 @@
-import { Linking } from 'react-native'
+import { Linking, Alert } from 'react-native'
 import InAppBrowser from 'react-native-inappbrowser-reborn'
-import { firebase } from '@react-native-firebase/messaging';
+import messaging, { firebase } from '@react-native-firebase/messaging';
 import DeviceInfo from 'react-native-device-info'
 import { showAlert, showAlertLink } from './utils'
 import { notificationApi } from './inngageApi'
@@ -39,9 +39,9 @@ export const openCommonNotification = (notificationData) => {
     return
   }
   const { notId, title, body, type, url, picture } = data
-  if (picture) {
-    return openRichNotification(notificationData)
-  }
+  // if (picture) {
+  //   return openRichNotification(notificationData)
+  // }
   const request = {
     notificationRequest: {
       id: notId,
@@ -105,13 +105,18 @@ export default async ({ appToken, dev }) => {
   // });
 
   firebase.messaging().onNotificationOpenedApp(async (remoteMessage) => {
+    console.log("Notification Oppened")
     openCommonNotification({ appToken, dev, remoteMessage, state: 'Background' })
   });
 
-  firebase.messaging().onMessage(async (remoteMessage) => {    console.log('Push received: Foreground')
+  messaging().getInitialNotification(async (remoteMessage) => {
+    console.log("from quit")
+  })
 
-  if (remoteMessage != null && remoteMessage.data.additional_data) {  
-    let msg = JSON.parse(remoteMessage.data.additional_data)
+  firebase.messaging().onMessage(async (remoteMessage) => {
+    console.log('Push received: Foreground')
+    if (remoteMessage != null && remoteMessage.data.additional_data) {
+      let msg = JSON.parse(remoteMessage.data.additional_data)
       if (msg.inapp_message == true) {
         const currentMessages = await AsyncStorage.getItem('inngage');
         if (currentMessages !== null) {
@@ -122,15 +127,22 @@ export default async ({ appToken, dev }) => {
       }
     } else if (remoteMessage != null && !remoteMessage.data.additional_data) {
       console.log(remoteMessage.data.title)
-        showAlert(remoteMessage.data.title, remoteMessage.data.body)
+      showAlert(remoteMessage.data.title, remoteMessage.data.body)
     }
     openCommonNotification({ appToken, dev, remoteMessage, state: 'foreground' })
   });
 
   firebase.messaging().setBackgroundMessageHandler(async (remoteMessage) => {
-    console.log('Push received: Background')
-    let msg = JSON.parse(remoteMessage.data.additional_data)
-    if (remoteMessage != null && remoteMessage.data.additional_data) {  
+    console.log('Push received: Background')    
+
+    const request = {
+      notificationRequest: {
+        id: remoteMessage.data.notId,
+        app_token: appToken,
+      },
+    }
+    if (remoteMessage != null && remoteMessage.data.additional_data) {
+      let msg = JSON.parse(remoteMessage.data.additional_data)
       console.log('first step')
       if (msg.inapp_message == true) {
         console.log('second step')
@@ -140,8 +152,32 @@ export default async ({ appToken, dev }) => {
         }
         messageArray.push(remoteMessage);
         await AsyncStorage.setItem('inngage', JSON.stringify(messageArray));
+        setTimeout(()=>{
+          messaging().getInitialNotification().then(notification => {
+            notificationApi(request, dev)
+          })},3000)
       }
-    }
-    openCommonNotification({ appToken, dev, remoteMessage, state: 'Background' })
-  });
+    }else if (remoteMessage != null && !remoteMessage.data.additional_data) {
+      setTimeout(()=>{
+        messaging().getInitialNotification().then(notification => {
+          if (!remoteMessage.data.url){
+            showAlert(remoteMessage.data.title, remoteMessage.data.body)
+            notificationApi(request, dev)
+          }else {
+            Linking.canOpenURL(remoteMessage.data.url).then((supported) => {
+              if (supported) {
+                showAlertLink(
+                  remoteMessage.data.title,
+                  remoteMessage.data.body,
+                  `${DeviceInfo.getApplicationName()}`,
+                  `Acessar ${remoteMessage.data.url} ?`,
+                ).then((response) => { supported && openLinkByType(remoteMessage.data.type, remoteMessage.data.url) })
+              }
+              notificationApi(request, dev)
+            }).catch(console.log)
+          }
+        })
+      }, 3000)  
+    }   
+  })
 }
