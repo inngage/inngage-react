@@ -64,6 +64,8 @@ export const openCommonNotification = (notificationData) => {
           `${DeviceInfo.getApplicationName()}`,
           `Acessar ${url} ?`,
         ).then((response) => { supported && openLinkByType(type, url) })
+      } else {
+        supported && openLinkByType(type, url) 
       }
     }
     notificationApi(request, dev)
@@ -151,6 +153,8 @@ export default async ({ appToken, dev, enableAlert }) => {
                     `${DeviceInfo.getApplicationName()}`,
                     `Acessar ${remoteMessage.data.url} ?`,
                   ).then((response) => { supported && openLinkByType(remoteMessage.data.type, remoteMessage.data.url) })
+                } else {
+                  supported && openLinkByType(remoteMessage.data.type, remoteMessage.data.url)
                 }
                 notificationApi(request, dev)
               }
