@@ -30,7 +30,7 @@ export const linkInApp = (link) => {
 const openLinkByType = (type, url) => (type === 'deep' ? Linking.openURL(url) : linkInApp(url))
 
 export const openCommonNotification = (notificationData) => {
-  const { appToken, dev, remoteMessage } = notificationData
+  const { appToken, dev, remoteMessage, enableAlert } = notificationData
   if (!remoteMessage) {
     return
   }
@@ -49,16 +49,22 @@ export const openCommonNotification = (notificationData) => {
     },
   }
   if (!url) {
-    return notificationApi(request, dev).then(() => showAlert(title, body)).catch(console.log)
+    return notificationApi(request, dev).then(() => {
+      if (enableAlert) {
+        showAlert(title, body)
+      }
+    }).catch(console.log)
   }
   return Linking.canOpenURL(url).then((supported) => {
     if (supported) {
-      showAlertLink(
-        title,
-        body,
-        `${DeviceInfo.getApplicationName()}`,
-        `Acessar ${url} ?`,
-      ).then((response) => { supported && openLinkByType(type, url) })
+      if (enableAlert) {
+        showAlertLink(
+          title,
+          body,
+          `${DeviceInfo.getApplicationName()}`,
+          `Acessar ${url} ?`,
+        ).then((response) => { supported && openLinkByType(type, url) })
+      }
     }
     notificationApi(request, dev)
   }).catch(console.log)
@@ -70,43 +76,12 @@ export const openRichNotification = (notificationData) => {
 
 
 
-export default async ({ appToken, dev }) => {
+export default async ({ appToken, dev, enableAlert }) => {
   var messageArray = [];
-
-  // firebase.messaging().onNotificationOpenedApp(async (remoteMessage) => {
-  //   console.log('Push received: Quiet')
-  //   console.log(remoteMessage)
-
-  //   if (remoteMessage.additional_data.inapp_message == true) {
-  //     const currentMessages = await AsyncStorage.getItem('inngage');
-  //     if (currentMessages !== null) {
-  //       messageArray = JSON.parse(currentMessages);
-  //     }
-  //     messageArray.push(remoteMessage);
-  //     await AsyncStorage.setItem('inngage', JSON.stringify(messageArray));
-  //   }
-  //   openCommonNotification({ appToken, dev, remoteMessage, state: 'Quit' })
-  // })
-  // firebase.messaging().getInitialNotification().then(async remoteMessage => {
-  //   console.log('Push received: Background')
-  //   console.log(remoteMessage)
-
-  //   if (remoteMessage != null && remoteMessage.data.additional_data) {
-  //     if (remoteMessage.data.additional_data.inapp_message == true) {
-  //       const currentMessages = await AsyncStorage.getItem('inngage');
-  //       if (currentMessages !== null) {
-  //         messageArray = JSON.parse(currentMessages);
-  //       }
-  //       messageArray.push(remoteMessage);
-  //       await AsyncStorage.setItem('inngage', JSON.stringify(messageArray));
-  //     }
-  //   }
-  //   openCommonNotification({ appToken, dev, remoteMessage, state: 'Background' })
-  // });
 
   firebase.messaging().onNotificationOpenedApp(async (remoteMessage) => {
     console.log("Notification Oppened")
-    openCommonNotification({ appToken, dev, remoteMessage, state: 'Background' })
+    openCommonNotification({ appToken, dev, remoteMessage, enableAlert, state: 'Background' })
   });
 
   messaging().getInitialNotification(async (remoteMessage) => {
@@ -129,11 +104,11 @@ export default async ({ appToken, dev }) => {
       console.log(remoteMessage.data.title)
       showAlert(remoteMessage.data.title, remoteMessage.data.body)
     }
-    openCommonNotification({ appToken, dev, remoteMessage, state: 'foreground' })
+    openCommonNotification({ appToken, dev, remoteMessage, enableAlert, state: 'foreground' })
   });
 
   firebase.messaging().setBackgroundMessageHandler(async (remoteMessage) => {
-    console.log('Push received: Background')    
+    console.log('Push received: Background')
 
     const request = {
       notificationRequest: {
@@ -152,32 +127,37 @@ export default async ({ appToken, dev }) => {
         }
         messageArray.push(remoteMessage);
         await AsyncStorage.setItem('inngage', JSON.stringify(messageArray));
-        setTimeout(()=>{
+        setTimeout(() => {
           messaging().getInitialNotification().then(notification => {
             notificationApi(request, dev)
-          })},3000)
+          })
+        }, 3000)
       }
-    }else if (remoteMessage != null && !remoteMessage.data.additional_data) {
-      setTimeout(()=>{
+    } else if (remoteMessage != null && !remoteMessage.data.additional_data) {
+      setTimeout(() => {
         messaging().getInitialNotification().then(notification => {
-          if (!remoteMessage.data.url){
-            showAlert(remoteMessage.data.title, remoteMessage.data.body)
+          if (!remoteMessage.data.url) {
+            if (enableAlert) {
+              showAlert(remoteMessage.data.title, remoteMessage.data.body)
+            }
             notificationApi(request, dev)
-          }else {
+          } else {
             Linking.canOpenURL(remoteMessage.data.url).then((supported) => {
               if (supported) {
-                showAlertLink(
-                  remoteMessage.data.title,
-                  remoteMessage.data.body,
-                  `${DeviceInfo.getApplicationName()}`,
-                  `Acessar ${remoteMessage.data.url} ?`,
-                ).then((response) => { supported && openLinkByType(remoteMessage.data.type, remoteMessage.data.url) })
+                if (enableAlert) {
+                  showAlertLink(
+                    remoteMessage.data.title,
+                    remoteMessage.data.body,
+                    `${DeviceInfo.getApplicationName()}`,
+                    `Acessar ${remoteMessage.data.url} ?`,
+                  ).then((response) => { supported && openLinkByType(remoteMessage.data.type, remoteMessage.data.url) })
+                }
+                notificationApi(request, dev)
               }
-              notificationApi(request, dev)
-            }).catch(console.log)
+            }).catch(error => console.log(error))
           }
         })
-      }, 3000)  
-    }   
+      }, 3000)
+    }
   })
 }

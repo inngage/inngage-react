@@ -297,11 +297,11 @@ export const Inapp = (props) => {
   }
 
   handleClose = async () => {
-    // if (props.onClose) {
-    //   if (props.onClose.toLowerCase() === 'clear') {
-    //     await AsyncStorage.removeItem('inngage');
-    //   }
-    // }
+    if (props.onClose) {
+      if (props.onClose.toLowerCase() === 'clear') {
+        await AsyncStorage.removeItem('inngage');
+      }
+    }
     setVisible(false)
   }
 
