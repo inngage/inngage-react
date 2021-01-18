@@ -104,7 +104,9 @@ export default async ({ appToken, dev, enableAlert }) => {
       }
     } else if (remoteMessage != null && !remoteMessage.data.additional_data) {
       console.log(remoteMessage.data.title)
-      showAlert(remoteMessage.data.title, remoteMessage.data.body)
+      if (enableAlert){
+        showAlert(remoteMessage.data.title, remoteMessage.data.body)
+      }
     }
     openCommonNotification({ appToken, dev, remoteMessage, enableAlert, state: 'foreground' })
   });
@@ -144,6 +146,7 @@ export default async ({ appToken, dev, enableAlert }) => {
             }
             notificationApi(request, dev)
           } else {
+            notificationApi(request, dev)
             Linking.canOpenURL(remoteMessage.data.url).then((supported) => {
               if (supported) {
                 if (enableAlert) {
@@ -155,8 +158,7 @@ export default async ({ appToken, dev, enableAlert }) => {
                   ).then((response) => { supported && openLinkByType(remoteMessage.data.type, remoteMessage.data.url) })
                 } else {
                   supported && openLinkByType(remoteMessage.data.type, remoteMessage.data.url)
-                }
-                notificationApi(request, dev)
+                }                
               }
             }).catch(error => console.log(error))
           }
