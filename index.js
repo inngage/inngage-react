@@ -159,7 +159,7 @@ export const Inapp = (props) => {
                     }
                   }}
                   key={i.toString()}
-                  style={[itemStyles.dot, {width: size, height: size}]}
+                  style={[itemStyles.dot, { width: size, height: size }]}
                 />
               )
             }
@@ -216,7 +216,7 @@ export const Inapp = (props) => {
           <Image style={[props.mediaStyle, { width: 200, height: 200 }]} source={{ uri: item.data.picture }} />
         )
       }
-    }        
+    }
     return (
       <View style={[itemStyles.body]}>
         <Text style={[itemStyles.title, props.titleStyle]}>{msg.title}</Text>
@@ -330,7 +330,7 @@ export const Inapp = (props) => {
                   underlayColor='#cccccc'
                   style={styles.closeButton}
                 >
-                  <Text style={{ fontWeight: 'bold', color:'#ffffff' }}>
+                  <Text style={{ fontWeight: 'bold', color: '#ffffff' }}>
                     X
                   </Text>
                 </TouchableHighlight>
@@ -390,7 +390,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#00000020',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex:90,
+    zIndex: 90,
   },
 });
 
@@ -471,16 +471,22 @@ const getFirebaseAccess = () => {
 const Inngage = {
   // ------------  Get Permission ------------------//
   GetPermission: async (props) => {
-    try{
+    try {
       LogBox.ignoreLogs(['registerHeadlessTask'])
-    } catch(e){}
-    try{
+    } catch (e) { }
+    try {
       console.ignoredYellowBox = ['registerHeadlessTask'];
-    } catch(e){}
+    } catch (e) { }
     try {
       AppRegistry.registerHeadlessTask('ReactNativeFirebaseMessagingHeadlessTask', () => backgroundNotificationHandler)
-      ListenToNotifications(props);
-
+      ListenToNotifications(props);      
+    } catch (e) {
+      console.error(e);
+      return { subscribed: false };
+    }
+  },
+  Subscription: (props) => {
+    try {
       const {
         appToken,
         dev,
@@ -524,7 +530,7 @@ const Inngage = {
       console.error(e);
       return { subscribed: false };
     }
-  },
+  }
 }
 
 
