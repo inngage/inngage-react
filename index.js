@@ -485,7 +485,7 @@ const Inngage = {
       return { subscribed: false };
     }
   },
-  Subscription: (props) => {
+  Subscription: async (props) => {
     try {
       const {
         appToken,
