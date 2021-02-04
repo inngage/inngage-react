@@ -30,7 +30,7 @@ export const linkInApp = (link) => {
 const openLinkByType = (type, url) => (type === 'deep' ? Linking.openURL(url) : linkInApp(url))
 
 export const openCommonNotification = (notificationData) => {
-  const { appToken, dev, remoteMessage, enableAlert } = notificationData
+  const { appToken, dev, remoteMessage, enableAlert, state } = notificationData
   if (!remoteMessage) {
     return
   }
@@ -49,11 +49,21 @@ export const openCommonNotification = (notificationData) => {
     },
   }
   if (!url) {
-    return notificationApi(request, dev).then(() => {
-      if (enableAlert) {
-        showAlert(title, body)
-      }
-    }).catch(console.log)
+    if (enableAlert && state === 'foreground') {
+      return notificationApi(request, dev).then(() => {
+        if (enableAlert) {
+          showAlert(title, body)
+        }
+      }).catch(console.log)
+    } else if (!enableAlert) {
+      return
+    } else {
+      return notificationApi(request, dev).then(() => {
+        if (enableAlert) {
+          showAlert(title, body)
+        }
+      }).catch(console.log)
+    }
   }
   return Linking.canOpenURL(url).then((supported) => {
     if (supported) {
@@ -64,11 +74,11 @@ export const openCommonNotification = (notificationData) => {
           `${DeviceInfo.getApplicationName()}`,
           `Acessar ${url} ?`,
         ).then((response) => { supported && openLinkByType(type, url) })
+        notificationApi(request, dev)
       } else {
-        supported && openLinkByType(type, url) 
+        supported && openLinkByType(type, url)
       }
     }
-    notificationApi(request, dev)
   }).catch(console.log)
 }
 export const openRichNotification = (notificationData) => {
@@ -104,7 +114,7 @@ export default async ({ appToken, dev, enableAlert }) => {
       }
     } else if (remoteMessage != null && !remoteMessage.data.additional_data) {
       console.log(remoteMessage.data.title)
-      if (enableAlert){
+      if (enableAlert) {
         showAlert(remoteMessage.data.title, remoteMessage.data.body)
       }
     }
@@ -158,7 +168,7 @@ export default async ({ appToken, dev, enableAlert }) => {
                   ).then((response) => { supported && openLinkByType(remoteMessage.data.type, remoteMessage.data.url) })
                 } else {
                   supported && openLinkByType(remoteMessage.data.type, remoteMessage.data.url)
-                }                
+                }
               }
             }).catch(error => console.log(error))
           }
