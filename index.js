@@ -493,6 +493,7 @@ const Inngage = {
         friendlyIdentifier,
         customFields,
         customData,
+        phoneNumber,
       } = props;
       const respToken = await getFirebaseAccess()
 
@@ -510,6 +511,7 @@ const Inngage = {
           app_token: appToken,
           identifier: friendlyIdentifier,
           registration: respToken,
+          phone_Number: phoneNumber,
           platform: DeviceInfo.getSystemName(),
           sdk: DeviceInfo.getBuildNumber(),
           device_model: DeviceInfo.getModel(),
