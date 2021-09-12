@@ -5,7 +5,7 @@ import * as RNLocalize from "react-native-localize";
 import { formatDate, subscriptionRequestAdapter, showAlertLink } from "./utils";
 import ListenToNotifications, { linkInApp } from "./ListenToNotifications";
 import { subscription, notificationApi } from "./inngageApi";
-import AsyncStorage from '@react-native-community/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Carousel, { Pagination } from 'react-native-snap-carousel';
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -471,6 +471,7 @@ const getFirebaseAccess = () => {
 const Inngage = {
   // ------------  Get Permission ------------------//
   GetPermission: async (props) => {
+
     try {
       LogBox.ignoreLogs(['registerHeadlessTask'])
     } catch (e) { }
@@ -479,7 +480,7 @@ const Inngage = {
     } catch (e) { }
     try {
       AppRegistry.registerHeadlessTask('ReactNativeFirebaseMessagingHeadlessTask', () => backgroundNotificationHandler)
-      ListenToNotifications(props);      
+      ListenToNotifications(props);
     } catch (e) {
       console.error(e);
       return { subscribed: false };
@@ -527,7 +528,9 @@ const Inngage = {
       };
 
       const request = subscriptionRequestAdapter(rawRequest, customData, customFields)
-      return subscription(request, dev);
+      const subscribe = await subscription(request, dev);
+      console.log(await subscribe.json())
+      return subscribe;
     } catch (e) {
       console.error(e);
       return { subscribed: false };

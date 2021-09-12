@@ -4,7 +4,7 @@ import messaging, { firebase } from '@react-native-firebase/messaging';
 import DeviceInfo from 'react-native-device-info'
 import { showAlert, showAlertLink } from './utils'
 import { notificationApi } from './inngageApi'
-import AsyncStorage from '@react-native-community/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const linkInApp = (link) => {
   InAppBrowser.open(link, {
