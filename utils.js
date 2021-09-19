@@ -11,6 +11,7 @@ const requestConfigFactory = (method, request) => ({
   headers: {
     Accept: 'application/json',
     'Content-Type': 'application/json',
+    Authorization: request.registerSubscriberRequest.authKey
   },
   method,
   body: JSON.stringify(request),
@@ -20,7 +21,7 @@ export const fetchClient = (method, requestBody, path, isDev = false) => {
   return new Promise((resolve) => {
     const url = String(baseUrlHook[isDev]).concat(path)
     const request = requestConfigFactory(method, requestBody)
-
+    console.log(request)
     fetch(url, request)
       .then(resolve)
       .catch(err => console.log('Fetch Error', err))
@@ -28,7 +29,7 @@ export const fetchClient = (method, requestBody, path, isDev = false) => {
 }
 
 export const formatDate = (timestamp) => {
-  if(!timestamp) {
+  if (!timestamp) {
     return null
   }
   return new Date(timestamp).toISOString()
@@ -52,7 +53,7 @@ export const showAlertLink = (title, body, appName, link) => {
 }
 
 export const subscriptionRequestAdapter = (sdkRequest, useCustomData, customData) => {
-  if(useCustomData) {
+  if (useCustomData) {
     return {
       registerSubscriberRequest: {
         ...sdkRequest.registerSubscriberRequest,

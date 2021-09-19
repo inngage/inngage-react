@@ -1,10 +1,9 @@
 import { firebase } from '@react-native-firebase/messaging';
-import InAppBrowser from 'react-native-inappbrowser-reborn'
 import DeviceInfo from "react-native-device-info";
 import * as RNLocalize from "react-native-localize";
 import { formatDate, subscriptionRequestAdapter, showAlertLink } from "./utils";
 import ListenToNotifications, { linkInApp } from "./ListenToNotifications";
-import { subscription, notificationApi } from "./inngageApi";
+import { subscription, eventsApi } from "./inngageApi";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Carousel, { Pagination } from 'react-native-snap-carousel';
 import React, { useState, useEffect, useRef } from 'react';
@@ -495,6 +494,7 @@ const Inngage = {
         customFields,
         customData,
         phoneNumber,
+        authKey
       } = props;
       const respToken = await getFirebaseAccess()
 
@@ -524,6 +524,7 @@ const Inngage = {
           app_installed_in,
           app_updated_in,
           uuid: DeviceInfo.getUniqueId(),
+          authKey
         }
       };
 
@@ -535,6 +536,17 @@ const Inngage = {
       console.error(e);
       return { subscribed: false };
     }
+  },
+  SendEvent: async (props) => {
+    const { authKey, newEventRequest } = props
+    const rawRequest = {
+      registerSubscriberRequest: {
+        authKey
+      },
+      newEventRequest
+    }
+    const subscribe = await eventsApi(rawRequest);
+    return subscribe
   }
 }
 
