@@ -7,15 +7,28 @@ const baseUrlHook = {
   [true]: 'https://apid.inngage.com.br/v1',
 }
 
-const requestConfigFactory = (method, request) => ({
-  headers: {
+const requestConfigFactory = (method, request) => {
+
+  let header = {
     Accept: 'application/json',
     'Content-Type': 'application/json',
-    Authorization: request.registerSubscriberRequest.authKey
-  },
-  method,
-  body: JSON.stringify(request),
-})
+  }
+
+  if (request.registerSubscriberRequest.authKey) {
+    header = {
+      ...header,
+      Authorization: request.registerSubscriberRequest.authKey
+    }
+  }
+
+  let objToSend = {
+    method,
+    body: JSON.stringify(request),
+    headers: header
+  }
+
+  return objToSend
+}
 
 export const fetchClient = (method, requestBody, path, isDev = false) => {
   return new Promise((resolve) => {
