@@ -5,6 +5,7 @@ import DeviceInfo from 'react-native-device-info'
 import { showAlert, showAlertLink } from './utils'
 import { notificationApi } from './inngageApi'
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import PushNotification from 'react-native-push-notification'
 
 export const linkInApp = (link) => {
   InAppBrowser.open(link, {
@@ -49,7 +50,7 @@ export const openCommonNotification = (notificationData) => {
     },
   }
   if (!url) {
-    if (enableAlert && state === 'foreground') {
+    if (state === 'foreground') {
       return notificationApi(request, dev).then(() => {
         if (enableAlert) {
           showAlert(title, body)
@@ -102,6 +103,45 @@ export default async ({ appToken, dev, enableAlert }) => {
 
   firebase.messaging().onMessage(async (remoteMessage) => {
     console.log('Push received: Foreground')
+
+    try {
+      PushNotification.configure({
+        onNotification: function(notification) {
+          console.log('LOCAL NOTIFICATION ==>', notification)
+
+          openCommonNotification({ appToken, dev, remoteMessage, enableAlert, state: 'foreground' })
+
+        },
+         channelId: "high_importance_channel",
+        priority: "high",
+        popInitialNotification: true,
+        requestPermissions: true
+      })
+      
+    } catch (e) { 
+      console.log(e)
+
+    }
+    try{
+     
+      PushNotification.presentLocalNotification({
+        autoCancel: true,
+        bigText:remoteMessage.data.body,
+        title: remoteMessage.data.title,
+        message: '',
+        vibrate: true,
+        vibration: 300,
+        playSound: true,
+        soundName: 'default',
+        
+      })
+       console.log(remoteMessage)
+    }catch(e){
+      console.log(e)
+    } 
+
+
+
     if (remoteMessage != null && remoteMessage.data.additional_data) {
       let msg = JSON.parse(remoteMessage.data.additional_data)
       if (msg.inapp_message == true) {
@@ -118,7 +158,6 @@ export default async ({ appToken, dev, enableAlert }) => {
         showAlert(remoteMessage.data.title, remoteMessage.data.body)
       }
     }
-    openCommonNotification({ appToken, dev, remoteMessage, enableAlert, state: 'foreground' })
   });
 
   firebase.messaging().setBackgroundMessageHandler(async (remoteMessage) => {

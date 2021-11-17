@@ -7,6 +7,7 @@ import { subscription, eventsApi } from "./inngageApi";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Carousel, { Pagination } from 'react-native-snap-carousel';
 import React, { useState, useEffect, useRef } from 'react';
+
 import {
   Platform,
   Modal,

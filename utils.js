@@ -13,14 +13,16 @@ const requestConfigFactory = (method, request) => {
     Accept: 'application/json',
     'Content-Type': 'application/json',
   }
-
-  if (request.registerSubscriberRequest.authKey) {
-    header = {
-      ...header,
-      Authorization: request.registerSubscriberRequest.authKey
+  try{
+    if (request.registerSubscriberRequest.authKey) {
+      header = {
+        ...header,
+        Authorization: request.registerSubscriberRequest.authKey
+      }
     }
-  }
-
+ }catch(e){
+   console.log(e)
+ }
   let objToSend = {
     method,
     body: JSON.stringify(request),
