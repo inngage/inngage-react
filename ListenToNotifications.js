@@ -97,8 +97,10 @@ export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }) =
     openCommonNotification({ appToken, dev, remoteMessage, enableAlert, state: 'Background' })
   });
 
-  const remoteMessage = await messaging().getInitialNotification();
-  onNotificationOpenedApp(remoteMessage);
+  if(typeof onNotificationOpenedApp == 'function') {
+    const remoteMessage = await messaging().getInitialNotification();
+    onNotificationOpenedApp(remoteMessage);  
+  }
 
   firebase.messaging().onMessage(async (remoteMessage) => {
     console.log('Push received: Foreground')
