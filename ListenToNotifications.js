@@ -89,7 +89,7 @@ export const openRichNotification = (notificationData) => {
 
 
 
-export default async ({ appToken, dev, enableAlert }) => {
+export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }) => {
   var messageArray = [];
 
   firebase.messaging().onNotificationOpenedApp(async (remoteMessage) => {
@@ -97,9 +97,10 @@ export default async ({ appToken, dev, enableAlert }) => {
     openCommonNotification({ appToken, dev, remoteMessage, enableAlert, state: 'Background' })
   });
 
-  messaging().getInitialNotification(async (remoteMessage) => {
-    console.log("from quit")
-  })
+  if(typeof onNotificationOpenedApp == 'function') {
+    const remoteMessage = await messaging().getInitialNotification();
+    onNotificationOpenedApp(remoteMessage);  
+  }
 
   firebase.messaging().onMessage(async (remoteMessage) => {
     console.log('Push received: Foreground')
