@@ -39,10 +39,7 @@ export const openCommonNotification = (notificationData) => {
   if (!data || (data && !Object.keys(data).length)) {
     return
   }
-  const { notId, title, body, type, url, picture } = data
-  // if (picture) {
-  //   return openRichNotification(notificationData)
-  // }
+  const { notId, title, body, type, url } = data
   const request = {
     notificationRequest: {
       id: notId,
@@ -50,47 +47,74 @@ export const openCommonNotification = (notificationData) => {
     },
   }
   if (!url) {
-    if (state === 'foreground') {
-      return notificationApi(request, dev).then(() => {
-        if (enableAlert) {
-          showAlert(title, body)
-        }
-      }).catch(console.log)
-    } else if (!enableAlert) {
-      return
-    } else {
-      return notificationApi(request, dev).then(() => {
-        if (enableAlert) {
-          showAlert(title, body)
-        }
-      }).catch(console.log)
-    }
+    
+    return notificationApi(request, dev).then(() => {
+       
+    }).catch(console.log)
+
   }
   return Linking.canOpenURL(url).then((supported) => {
     if (supported) {
-      if (enableAlert) {
-        showAlertLink(
-          title,
-          body,
-          `${DeviceInfo.getApplicationName()}`,
-          `Acessar ${url} ?`,
-        ).then((response) => { supported && openLinkByType(type, url) })
-        notificationApi(request, dev)
-      } else {
+     
         supported && openLinkByType(type, url)
-      }
+      
     }
   }).catch(console.log)
 }
 export const openRichNotification = (notificationData) => {
-  //console.log("Rich push", notificationData)
-  //Rich push code
 }
 
 
 
 export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }) => {
   var messageArray = [];
+
+  
+  firebase.messaging().setBackgroundMessageHandler(async (remoteMessage) => {
+    console.log('Push received: Background')
+
+    const request = {
+      notificationRequest: {
+        id: remoteMessage.data.notId,
+        app_token: appToken,
+      },
+    }
+    if (remoteMessage != null && remoteMessage.data.additional_data) {
+      let msg = JSON.parse(remoteMessage.data.additional_data)
+      console.log('first step')
+      if (msg.inapp_message == true) {
+        console.log('second step')
+        const currentMessages = await AsyncStorage.getItem('inngage');
+        if (currentMessages !== null) {
+          messageArray = JSON.parse(currentMessages);
+        }
+        messageArray.push(remoteMessage);
+        await AsyncStorage.setItem('inngage', JSON.stringify(messageArray));
+        setTimeout(() => {
+          messaging().getInitialNotification().then(notification => {
+            notificationApi(request, dev)
+          })
+        }, 3000)
+      }
+    } else if (remoteMessage != null && !remoteMessage.data.additional_data) {
+      setTimeout(() => {
+        messaging().getInitialNotification().then(notification => {
+          if (!remoteMessage.data.url) {
+            notificationApi(request, dev)
+          } else {
+            notificationApi(request, dev)
+            Linking.canOpenURL(remoteMessage.data.url).then((supported) => {
+              if (supported) {
+               
+                  supported && openLinkByType(remoteMessage.data.type, remoteMessage.data.url)
+                
+              }
+            }).catch(error => console.log(error))
+          }
+        })
+      }, 3000)
+    }
+  })
 
   firebase.messaging().onNotificationOpenedApp(async (remoteMessage) => {
     console.log("Notification Oppened")
@@ -161,59 +185,4 @@ export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }) =
     }
   });
 
-  firebase.messaging().setBackgroundMessageHandler(async (remoteMessage) => {
-    console.log('Push received: Background')
-
-    const request = {
-      notificationRequest: {
-        id: remoteMessage.data.notId,
-        app_token: appToken,
-      },
-    }
-    if (remoteMessage != null && remoteMessage.data.additional_data) {
-      let msg = JSON.parse(remoteMessage.data.additional_data)
-      console.log('first step')
-      if (msg.inapp_message == true) {
-        console.log('second step')
-        const currentMessages = await AsyncStorage.getItem('inngage');
-        if (currentMessages !== null) {
-          messageArray = JSON.parse(currentMessages);
-        }
-        messageArray.push(remoteMessage);
-        await AsyncStorage.setItem('inngage', JSON.stringify(messageArray));
-        setTimeout(() => {
-          messaging().getInitialNotification().then(notification => {
-            notificationApi(request, dev)
-          })
-        }, 3000)
-      }
-    } else if (remoteMessage != null && !remoteMessage.data.additional_data) {
-      setTimeout(() => {
-        messaging().getInitialNotification().then(notification => {
-          if (!remoteMessage.data.url) {
-            if (enableAlert) {
-              showAlert(remoteMessage.data.title, remoteMessage.data.body)
-            }
-            notificationApi(request, dev)
-          } else {
-            notificationApi(request, dev)
-            Linking.canOpenURL(remoteMessage.data.url).then((supported) => {
-              if (supported) {
-                if (enableAlert) {
-                  showAlertLink(
-                    remoteMessage.data.title,
-                    remoteMessage.data.body,
-                    `${DeviceInfo.getApplicationName()}`,
-                    `Acessar ${remoteMessage.data.url} ?`,
-                  ).then((response) => { supported && openLinkByType(remoteMessage.data.type, remoteMessage.data.url) })
-                } else {
-                  supported && openLinkByType(remoteMessage.data.type, remoteMessage.data.url)
-                }
-              }
-            }).catch(error => console.log(error))
-          }
-        })
-      }, 3000)
-    }
-  })
 }
