@@ -68,7 +68,7 @@ export const openRichNotification = (notificationData) => {
 
 export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }) => {
   var messageArray = [];
-
+  
   
   firebase.messaging().setBackgroundMessageHandler(async (remoteMessage) => {
     console.log('Push received: Background')
@@ -160,8 +160,10 @@ export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }) =
         soundName: 'default',
         
       })
+       console.log('LOCAL NOTIFICATION : ')
        console.log(remoteMessage)
     }catch(e){
+      onsole.log('LOCAL NOTIFICATION ERROR: ')
       console.log(e)
     } 
 
@@ -185,4 +187,5 @@ export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }) =
     }
   });
 
+ 
 }
