@@ -1,13 +1,12 @@
-import { Linking, Alert } from 'react-native'
+import { Linking } from 'react-native'
 import InAppBrowser from 'react-native-inappbrowser-reborn'
 import messaging, { firebase } from '@react-native-firebase/messaging';
-import DeviceInfo from 'react-native-device-info'
-import { showAlert, showAlertLink } from './utils'
-import { notificationApi } from './inngageApi'
+import { showAlert } from './utils'
+import { notificationApi } from './services/inngage'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PushNotification from 'react-native-push-notification'
 
-export const linkInApp = (link) => {
+export const linkInApp = (link: string) => {
   InAppBrowser.open(link, {
     dismissButtonStyle: 'cancel',
     preferredBarTintColor: 'gray',
@@ -28,7 +27,7 @@ export const linkInApp = (link) => {
   })
 }
 
-const openLinkByType = (type, url) => (type === 'deep' ? Linking.openURL(url) : linkInApp(url))
+const openLinkByType = (type: string, url: string) => (type === 'deep' ? Linking.openURL(url) : linkInApp(url))
 
 export const openCommonNotification = (notificationData) => {
   const { appToken, dev, remoteMessage, enableAlert, state } = notificationData
@@ -50,7 +49,7 @@ export const openCommonNotification = (notificationData) => {
     
     return notificationApi(request, dev).then(() => {
        
-    }).catch(console.log)
+    }).catch(console.error)
 
   }
   return Linking.canOpenURL(url).then((supported) => {
@@ -59,15 +58,20 @@ export const openCommonNotification = (notificationData) => {
         supported && openLinkByType(type, url)
       
     }
-  }).catch(console.log)
+  }).catch(console.error)
 }
 export const openRichNotification = (notificationData) => {
 }
 
 
-
-export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }) => {
-  var messageArray = [];
+export interface notificationsListenerProps {
+  appToken: string, 
+  dev?: boolean, 
+  enableAlert: boolean,
+  onNotificationOpenedApp?: any,
+}
+export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }: notificationsListenerProps) => {
+  var messageArray: any = [];
   
   
   firebase.messaging().setBackgroundMessageHandler(async (remoteMessage) => {
@@ -75,12 +79,12 @@ export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }) =
 
     const request = {
       notificationRequest: {
-        id: remoteMessage.data.notId,
+        id: remoteMessage.data!.notId,
         app_token: appToken,
       },
     }
-    if (remoteMessage != null && remoteMessage.data.additional_data) {
-      let msg = JSON.parse(remoteMessage.data.additional_data)
+    if (remoteMessage != null && remoteMessage.data!.additional_data) {
+      let msg = JSON.parse(remoteMessage.data!.additional_data)
       console.log('first step')
       if (msg.inapp_message == true) {
         console.log('second step')
@@ -96,20 +100,20 @@ export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }) =
           })
         }, 3000)
       }
-    } else if (remoteMessage != null && !remoteMessage.data.additional_data) {
+    } else if (remoteMessage != null && !remoteMessage.data!.additional_data) {
       setTimeout(() => {
         messaging().getInitialNotification().then(notification => {
-          if (!remoteMessage.data.url) {
-            notificationApi(request, dev)
+          if (!remoteMessage.data!.url) {
+            notificationApi(request, dev) // TODO, responsible for triggering the notification api multiple times
           } else {
             notificationApi(request, dev)
-            Linking.canOpenURL(remoteMessage.data.url).then((supported) => {
+            Linking.canOpenURL(remoteMessage.data!.url).then((supported) => {
               if (supported) {
                
-                  supported && openLinkByType(remoteMessage.data.type, remoteMessage.data.url)
+                  supported && openLinkByType(remoteMessage.data!.type, remoteMessage.data!.url)
                 
               }
-            }).catch(error => console.log(error))
+            }).catch(error => console.error(error))
           }
         })
       }, 3000)
@@ -144,15 +148,15 @@ export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }) =
       })
       
     } catch (e) { 
-      console.log(e)
+      console.error(e)
 
     }
     try{
      
       PushNotification.presentLocalNotification({
         autoCancel: true,
-        bigText:remoteMessage.data.body,
-        title: remoteMessage.data.title,
+        bigText:remoteMessage.data!.body,
+        title: remoteMessage.data!.title,
         message: '',
         vibrate: true,
         vibration: 300,
@@ -163,14 +167,14 @@ export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }) =
        console.log('LOCAL NOTIFICATION : ')
        console.log(remoteMessage)
     }catch(e){
-      onsole.log('LOCAL NOTIFICATION ERROR: ')
-      console.log(e)
+      console.error('LOCAL NOTIFICATION ERROR: ')
+      console.error(e)
     } 
 
 
 
-    if (remoteMessage != null && remoteMessage.data.additional_data) {
-      let msg = JSON.parse(remoteMessage.data.additional_data)
+    if (remoteMessage != null && remoteMessage.data!.additional_data) {
+      let msg = JSON.parse(remoteMessage.data!.additional_data)
       if (msg.inapp_message == true) {
         const currentMessages = await AsyncStorage.getItem('inngage');
         if (currentMessages !== null) {
@@ -179,10 +183,10 @@ export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }) =
         messageArray.push(remoteMessage);
         await AsyncStorage.setItem('inngage', JSON.stringify(messageArray));
       }
-    } else if (remoteMessage != null && !remoteMessage.data.additional_data) {
-      console.log(remoteMessage.data.title)
+    } else if (remoteMessage != null && !remoteMessage.data!.additional_data) {
+      console.log(remoteMessage.data!.title)
       if (enableAlert) {
-        showAlert(remoteMessage.data.title, remoteMessage.data.body)
+        showAlert(remoteMessage.data!.title, remoteMessage.data!.body)
       }
     }
   });
