@@ -153,7 +153,7 @@ export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }: n
     }
     try{
      
-      PushNotification.presentLocalNotification({
+      PushNotification.localNotification({
         autoCancel: true,
         bigText:remoteMessage.data!.body,
         title: remoteMessage.data!.title,
