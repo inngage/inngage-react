@@ -1,12 +1,14 @@
 {
   "name": "@inngageregistry/inngage-react",
-  "version": "2.3.3",
+  "version": "3.0.0",
   "description": "Inngage react integration",
-  "main": "index.js",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npx tsc"
   },
-  "author": "LAP - BrunoBNascimento",
+  "author": "Inngage Developer",
   "license": "ISC",
   "repository": {
     "type": "git",
@@ -16,5 +18,23 @@
     "url": "https://github.com/inngage/inngage-react/issues"
   },
   "homepage": "https://github.com/inngage/inngage-react#readme",
-  "dependencies": {}
+  "dependencies": {
+    "@react-native-firebase/app": "^14.11.0",
+    "@react-native-firebase/messaging": "^14.11.0",
+    "react-native-localize": "^2.2.2",
+    "react-native-snap-carousel": "^3.9.1",
+    "@react-native-async-storage/async-storage": "^1.16.1",
+    "react-native-inappbrowser-reborn": "^3.6.3",
+    "@react-native-community/push-notification-ios": "^1.10.1",
+    "react-native-push-notification": "^8.1.1",
+    "react-native-device-info": "^8.4.9"
+  },
+  "devDependencies": {
+    "@types/jest": "^27.4.0",
+    "@types/react": "^17.0.38",
+    "@types/react-native": "^0.66.15",
+    "@types/react-native-snap-carousel": "^3.8.5",
+    "@types/react-test-renderer": "^17.0.1",
+    "typescript": "^4.5.5"
+  }
 }
