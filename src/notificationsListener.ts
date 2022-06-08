@@ -4,7 +4,7 @@ import messaging, { firebase } from '@react-native-firebase/messaging';
 import { showAlert } from './utils'
 import { notificationApi } from './services/inngage'
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import PushNotification from 'react-native-push-notification'
+import PushNotification, { Importance } from 'react-native-push-notification'
 
 export const linkInApp = (link: string) => {
   InAppBrowser.open(link, {
@@ -46,34 +46,32 @@ export const openCommonNotification = (notificationData) => {
     },
   }
   if (!url) {
-    
+
     return notificationApi(request, dev).then(() => {
-       
+
     }).catch(console.error)
 
   }
   return Linking.canOpenURL(url).then((supported) => {
     if (supported) {
-     
-        supported && openLinkByType(type, url)
-      
+
+      supported && openLinkByType(type, url)
+
     }
   }).catch(console.error)
 }
 export const openRichNotification = (notificationData) => {
 }
 
-
 export interface notificationsListenerProps {
-  appToken: string, 
-  dev?: boolean, 
+  appToken: string,
+  dev?: boolean,
   enableAlert: boolean,
   onNotificationOpenedApp?: any,
 }
 export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }: notificationsListenerProps) => {
   var messageArray: any = [];
-  
-  
+
   firebase.messaging().setBackgroundMessageHandler(async (remoteMessage) => {
     console.log('Push received: Background')
 
@@ -109,9 +107,9 @@ export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }: n
             notificationApi(request, dev)
             Linking.canOpenURL(remoteMessage.data!.url).then((supported) => {
               if (supported) {
-               
-                  supported && openLinkByType(remoteMessage.data!.type, remoteMessage.data!.url)
-                
+
+                supported && openLinkByType(remoteMessage.data!.type, remoteMessage.data!.url)
+
               }
             }).catch(error => console.error(error))
           }
@@ -125,9 +123,9 @@ export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }: n
     openCommonNotification({ appToken, dev, remoteMessage, enableAlert, state: 'Background' })
   });
 
-  if(typeof onNotificationOpenedApp == 'function') {
+  if (typeof onNotificationOpenedApp == 'function') {
     const remoteMessage = await messaging().getInitialNotification();
-    onNotificationOpenedApp(remoteMessage);  
+    onNotificationOpenedApp(remoteMessage);
   }
 
   firebase.messaging().onMessage(async (remoteMessage) => {
@@ -135,43 +133,42 @@ export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }: n
 
     try {
       PushNotification.configure({
-        onNotification: function(notification) {
+        onNotification: function (notification) {
           console.log('LOCAL NOTIFICATION ==>', notification)
 
           openCommonNotification({ appToken, dev, remoteMessage, enableAlert, state: 'foreground' })
-
         },
-         channelId: "high_importance_channel",
-        priority: "high",
         popInitialNotification: true,
         requestPermissions: true
       })
-      
-    } catch (e) { 
-      console.error(e)
 
-    }
-    try{
-     
-      PushNotification.localNotification({
-        autoCancel: true,
-        bigText:remoteMessage.data!.body,
-        title: remoteMessage.data!.title,
-        message: '',
-        vibrate: true,
-        vibration: 300,
+      PushNotification.createChannel({
+        channelId: 'high_importance_channel',
+        channelName: 'default',
+        importance: Importance.HIGH,
         playSound: true,
         soundName: 'default',
-        
-      })
-       console.log('LOCAL NOTIFICATION : ')
-       console.log(remoteMessage)
-    }catch(e){
+        vibrate: true
+      }, (created) => console.log(`createChannel returned '${created}'`));
+
+    } catch (e) {
+      console.error(e)
+    }
+    try {
+      PushNotification.localNotification({
+        autoCancel: true,
+        title: remoteMessage.data!.title,
+        message: remoteMessage.data!.body,
+        vibration: 300,
+        channelId: "high_importance_channel"
+      });
+
+      console.log('LOCAL NOTIFICATION : ')
+      console.log(remoteMessage)
+    } catch (e) {
       console.error('LOCAL NOTIFICATION ERROR: ')
       console.error(e)
-    } 
-
-
+    }
 
     if (remoteMessage != null && remoteMessage.data!.additional_data) {
       let msg = JSON.parse(remoteMessage.data!.additional_data)
@@ -190,6 +187,4 @@ export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }: n
       }
     }
   });
-
- 
 }
