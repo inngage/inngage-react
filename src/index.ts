@@ -1,5 +1,5 @@
 import { Inapp } from './components/Inapp';
-import Inngage from './inngage';
+import Inngage from './Inngage';
 
 //-------------- In-APP Component -------------//
 export { Inapp };
