@@ -17,9 +17,9 @@ import { subscriptionApi, eventsApi } from "./services/inngage";
 const backgroundNotificationHandler = async remoteMessage => {
   var messageArray: any = [];
   console.log("Remote message:", JSON.stringify(remoteMessage));
-  
+
   console.log('Called backgroundNotificationHandler');
-  
+
   const currentMessages = await AsyncStorage.getItem('messages');
   if (currentMessages !== null) {
     messageArray = JSON.parse(currentMessages);
@@ -39,18 +39,20 @@ const getFirebaseAccess = () => {
       }
     })
     try {
-      await firebase.messaging().registerDeviceForRemoteMessages()
-      const permission = await firebase.messaging().hasPermission()
-      if (!permission) {
+      if (!firebase.messaging().isDeviceRegisteredForRemoteMessages)
+        await firebase.messaging().registerDeviceForRemoteMessages();
+
+      const permission = await firebase.messaging().hasPermission();
+      if (permission === firebase.messaging.AuthorizationStatus.NOT_DETERMINED) {
         try {
-          await firebase.messaging().requestPermission()
+          await firebase.messaging().requestPermission();
         } catch (e) {
           console.error(e)
-          return resolve(firebaseToken)
+          return resolve(firebaseToken);
         }
       }
       try {
-        firebaseToken = await firebase.messaging().getToken()
+        firebaseToken = await firebase.messaging().getToken();
       } catch (error) {
         console.error(error)
         return resolve(firebaseToken)
@@ -62,7 +64,6 @@ const getFirebaseAccess = () => {
     }
   });
 };
-
 
 interface SubscriptionProps {
   appToken: string,
