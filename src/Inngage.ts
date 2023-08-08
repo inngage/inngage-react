@@ -68,12 +68,12 @@ const getFirebaseAccess = () => {
 interface SubscriptionProps {
   appToken: string,
   enableAlert: boolean,
-  authKey: string,
   dev?: boolean,
   friendlyIdentifier?: string,
   customFields?: any,
   customData?: any,
-  phoneNumber?: string
+  phoneNumber?: string,
+  email?: string
 }
 
 interface SendEventProps {
@@ -91,7 +91,6 @@ interface SendEventProps {
       redirect_link: string
     }
   },
-  authKey: string
 }
 const Inngage = {
   // ------------  Register Notification Listener ------------//
@@ -118,17 +117,19 @@ const Inngage = {
     customFields,
     customData,
     phoneNumber,
-    authKey
+    email,
   }: SubscriptionProps) => {
     try {
       const respToken = await getFirebaseAccess()
 
       const locales = RNLocalize.getLocales();
 
+      const os_locale = locales ? locales[0].countryCode : ''
       const os_language = locales && locales.length ? locales[0].languageCode : ''
       const device_manufacturer = await DeviceInfo.getManufacturer();
       const installTime = await DeviceInfo.getFirstInstallTime();
       const lastUpdateTime = await DeviceInfo.getLastUpdateTime();
+      const uuid = await DeviceInfo.getUniqueId();
       const app_installed_in = formatDate(installTime);
       const app_updated_in = formatDate(lastUpdateTime);
 
@@ -137,19 +138,19 @@ const Inngage = {
           app_token: appToken,
           identifier: friendlyIdentifier,
           registration: respToken,
-          phone_Number: phoneNumber,
           platform: DeviceInfo.getSystemName(),
           sdk: DeviceInfo.getBuildNumber(),
           device_model: DeviceInfo.getModel(),
           device_manufacturer,
-          os_locale: RNLocalize.getCountry(),
+          os_locale,
           os_language,
           os_version: DeviceInfo.getReadableVersion(),
           app_version: DeviceInfo.getBuildNumber(),
           app_installed_in,
           app_updated_in,
-          uuid: DeviceInfo.getUniqueId(),
-          authKey
+          uuid,
+          phone_Number: phoneNumber,
+          email: email,
         }
       };
 
@@ -163,15 +164,13 @@ const Inngage = {
     }
   },
   SendEvent: async (props: SendEventProps) => {
-    const { authKey, newEventRequest } = props
-    const rawRequest = {
-      registerSubscriberRequest: {
-        authKey
-      },
-      newEventRequest
+    try {
+      return await eventsApi(props);
+    } catch (e) {
+      console.error(e)
+      return { subscribed: false };
     }
-    const subscribe = await eventsApi(rawRequest);
-    return subscribe
+
   }
 }
 
