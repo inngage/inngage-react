@@ -1,5 +1,6 @@
 import {
   Platform,
+  PermissionsAndroid,
   LogBox,
   AppRegistry,
 } from "react-native";
@@ -30,39 +31,49 @@ const backgroundNotificationHandler = async remoteMessage => {
 };
 
 // --- Get Firebase Access ------/
-const getFirebaseAccess = () => {
-  let firebaseToken = 'W7SAl94Jk6l3w95W9wCgmv3zZ99V5FReNUytdgJUFUvpvZoqXf72'
-  return new Promise(async (resolve) => {
-    DeviceInfo.isEmulator().then(isEmulator => {
-      if (isEmulator && Platform.OS === "ios") {
-        return resolve(firebaseToken)
-      }
-    })
-    try {
-      if (!firebase.messaging().isDeviceRegisteredForRemoteMessages)
-        await firebase.messaging().registerDeviceForRemoteMessages();
+const getFirebaseAccess = async (): Promise<string | null> => {
+  try {
+    const apiLevel = await DeviceInfo.getApiLevel();
 
-      const permission = await firebase.messaging().hasPermission();
-      if (permission === firebase.messaging.AuthorizationStatus.NOT_DETERMINED) {
-        try {
-          await firebase.messaging().requestPermission();
-        } catch (e) {
-          console.error(e)
-          return resolve(firebaseToken);
+    if (apiLevel >= 33) {
+      await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+      );
+    }
+
+    const authStatus = await firebase.messaging().requestPermission();
+
+    const enabled =
+      authStatus === firebase.messaging.AuthorizationStatus.AUTHORIZED ||
+      authStatus === firebase.messaging.AuthorizationStatus.PROVISIONAL;
+
+    if (enabled) {
+      let fcmToken = await AsyncStorage.getItem('fcmToken');
+      console.log('Old token: ', fcmToken);
+
+      if (!fcmToken) {
+        if (!firebase.messaging().isDeviceRegisteredForRemoteMessages) {
+          await firebase.messaging().registerDeviceForRemoteMessages();
+        }
+
+        const newFcmToken = await firebase.messaging().getToken();
+
+        if (newFcmToken) {
+          await AsyncStorage.setItem('fcmToken', newFcmToken);
+          console.log('New token: ', newFcmToken);
+          return newFcmToken;
         }
       }
-      try {
-        firebaseToken = await firebase.messaging().getToken();
-      } catch (error) {
-        console.error(error)
-        return resolve(firebaseToken)
-      }
-      return resolve(firebaseToken)
-    } catch (err) {
-      console.error(err)
-      return resolve(firebaseToken)
+
+      console.log('Authorization status:', authStatus);
+      return fcmToken;
     }
-  });
+
+    return null;
+  } catch (error) {
+    console.log('Erro no getFirebaseAccess: ', error);
+    throw error;
+  }
 };
 
 interface SubscriptionProps {
