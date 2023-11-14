@@ -1,6 +1,6 @@
 import { Linking } from 'react-native'
 import InAppBrowser from 'react-native-inappbrowser-reborn'
-import messaging, { firebase } from '@react-native-firebase/messaging';
+import messaging from '@react-native-firebase/messaging';
 import { showAlert } from './utils'
 import { notificationApi } from './services/inngage'
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -27,40 +27,46 @@ export const linkInApp = (link: string) => {
   })
 }
 
-const openLinkByType = (type: string, url: string) => (type === 'deep' ? Linking.openURL(url) : linkInApp(url))
+const openLinkByType = (type: string, url: string) => {
+  const linkTypeHandlers: Record<string, () => void> = {
+    deep: () => Linking.openURL(url),
+    inapp: () => linkInApp(url),
+  };
 
-export const openCommonNotification = (notificationData) => {
-  const { appToken, dev, remoteMessage, enableAlert, state } = notificationData
-  if (!remoteMessage) {
-    return
+  const handler = linkTypeHandlers[type];
+  if (handler) {
+    handler();
   }
+};
+
+const openCommonNotification = ({ appToken, dev, remoteMessage, enableAlert, state }) => {
+  console.log("Notification Opened from", state)
+
+  if (!remoteMessage)
+    return
+
   const { data } = remoteMessage
-  if (!data || (data && !Object.keys(data).length)) {
+  console.log("Data:", data)
+  if (!data || (data && !Object.keys(data).length))
     return
-  }
+
   const { notId, title, body, type, url } = data
   const request = {
     notificationRequest: {
       id: notId,
       app_token: appToken,
-    },
-  }
-  if (!url) {
-
-    return notificationApi(request, dev).then(() => {
-
-    }).catch(console.error)
-
-  }
-  return Linking.canOpenURL(url).then((supported) => {
-    if (supported) {
-
-      supported && openLinkByType(type, url)
-
     }
-  }).catch(console.error)
-}
-export const openRichNotification = (notificationData) => {
+  }
+
+  if (url) {
+    Linking.canOpenURL(url).then((supported) => {
+      if (supported) {
+        supported && openLinkByType(type, url)
+      }
+    }).catch(console.error)
+  }
+
+  return notificationApi(request, dev)
 }
 
 export interface notificationsListenerProps {
@@ -72,71 +78,31 @@ export interface notificationsListenerProps {
 export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }: notificationsListenerProps) => {
   var messageArray: any = [];
 
-  firebase.messaging().setBackgroundMessageHandler(async (remoteMessage) => {
-    console.log('Push received: Background')
-
-    const request = {
-      notificationRequest: {
-        id: remoteMessage.data!.notId,
-        app_token: appToken,
-      },
-    }
-    if (remoteMessage != null && remoteMessage.data!.additional_data) {
-      let msg = JSON.parse(remoteMessage.data!.additional_data)
-      console.log('first step')
-      if (msg.inapp_message == true) {
-        console.log('second step')
-        const currentMessages = await AsyncStorage.getItem('inngage');
-        if (currentMessages !== null) {
-          messageArray = JSON.parse(currentMessages);
-        }
-        messageArray.push(remoteMessage);
-        await AsyncStorage.setItem('inngage', JSON.stringify(messageArray));
-        setTimeout(() => {
-          messaging().getInitialNotification().then(notification => {
-            notificationApi(request, dev)
-          })
-        }, 3000)
-      }
-    } else if (remoteMessage != null && !remoteMessage.data!.additional_data) {
-      setTimeout(() => {
-        messaging().getInitialNotification().then(notification => {
-          if (!remoteMessage.data!.url) {
-            notificationApi(request, dev) // TODO, responsible for triggering the notification api multiple times
-          } else {
-            notificationApi(request, dev)
-            Linking.canOpenURL(remoteMessage.data!.url).then((supported) => {
-              if (supported) {
-
-                supported && openLinkByType(remoteMessage.data!.type, remoteMessage.data!.url)
-
-              }
-            }).catch(error => console.error(error))
-          }
-        })
-      }, 3000)
-    }
-  })
-
-  firebase.messaging().onNotificationOpenedApp(async (remoteMessage) => {
-    console.log("Notification Oppened")
-    openCommonNotification({ appToken, dev, remoteMessage, enableAlert, state: 'Background' })
-  });
-
   if (typeof onNotificationOpenedApp == 'function') {
-    const remoteMessage = await messaging().getInitialNotification();
-    onNotificationOpenedApp(remoteMessage);
+    messaging().getInitialNotification().then((value) => {
+      onNotificationOpenedApp(value?.data);
+    });
   }
 
-  firebase.messaging().onMessage(async (remoteMessage) => {
-    console.log('Push received: Foreground')
+  const handleBackgroundMessage = async (remoteMessage: any) => {
+    console.log('Message handled in the background!', remoteMessage);
+  }
 
+  const handleNotificationOpenedApp = async (remoteMessage: any) => {
+    await openCommonNotification({ appToken, dev, remoteMessage, enableAlert, state: 'Background' })
+  }
+
+  const handleInitialNotification = async (remoteMessage: any) => {
+    await openCommonNotification({ appToken, dev, remoteMessage, enableAlert, state: 'Closed' })
+  }
+
+  const handleForegroundMessage = async (remoteMessage: any) => {
     try {
       PushNotification.configure({
         onNotification: function (notification) {
           console.log('LOCAL NOTIFICATION ==>', notification)
 
-          openCommonNotification({ appToken, dev, remoteMessage, enableAlert, state: 'foreground' })
+          openCommonNotification({ appToken, dev, remoteMessage, enableAlert, state: 'Foreground' })
         },
         popInitialNotification: true,
         requestPermissions: true
@@ -186,5 +152,26 @@ export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }: n
         showAlert(remoteMessage.data!.title, remoteMessage.data!.body)
       }
     }
-  });
+  }
+
+  messaging().setBackgroundMessageHandler(handleBackgroundMessage)
+  messaging().onNotificationOpenedApp(handleNotificationOpenedApp)
+  messaging().getInitialNotification().then(async (remoteMessage) => {
+    console.log("Remote message ID:", remoteMessage?.messageId)
+    try {
+      const lastRemoteMessageId = await AsyncStorage.getItem('LAST_REMOTE_MESSAGE_ID');
+      const newRemoteMessageId = remoteMessage?.messageId;
+
+      console.log("Last RM Id:", lastRemoteMessageId);
+      console.log("New RM Id:", newRemoteMessageId);
+
+      if (newRemoteMessageId && lastRemoteMessageId !== newRemoteMessageId) {
+        await AsyncStorage.setItem('LAST_REMOTE_MESSAGE_ID', newRemoteMessageId);
+        return handleInitialNotification(remoteMessage);
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  })
+  messaging().onMessage(handleForegroundMessage)
 }

@@ -14,22 +14,6 @@ import { formatDate, subscriptionRequestAdapter } from "./utils";
 import notificationsListener, { notificationsListenerProps } from "./notificationsListener";
 import { subscriptionApi, eventsApi } from "./services/inngage";
 
-// --- handle background message ------/
-const backgroundNotificationHandler = async remoteMessage => {
-  var messageArray: any = [];
-  console.log("Remote message:", JSON.stringify(remoteMessage));
-
-  console.log('Called backgroundNotificationHandler');
-
-  const currentMessages = await AsyncStorage.getItem('messages');
-  if (currentMessages !== null) {
-    messageArray = JSON.parse(currentMessages);
-  }
-  messageArray.push(remoteMessage);
-
-  await AsyncStorage.setItem('messages', JSON.stringify(messageArray));
-};
-
 // --- Get Firebase Access ------/
 const getFirebaseAccess = async (): Promise<string | null> => {
   try {
@@ -106,16 +90,8 @@ interface SendEventProps {
 const Inngage = {
   // ------------  Register Notification Listener ------------//
   RegisterNotificationListener: async (props: notificationsListenerProps) => {
-
     try {
-      LogBox.ignoreLogs(['registerHeadlessTask'])
-    } catch (e) { }
-    try {
-      console.ignoredYellowBox = ['registerHeadlessTask'];
-    } catch (e) { }
-    try {
-      AppRegistry.registerHeadlessTask('ReactNativeFirebaseMessagingHeadlessTask', () => backgroundNotificationHandler)
-      notificationsListener({ ...props });
+      await notificationsListener({ ...props });
     } catch (e) {
       console.error(e);
       return { subscribed: false };

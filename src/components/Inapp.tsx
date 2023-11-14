@@ -64,7 +64,7 @@ export const Inapp = (props: InappProps) => {
       }
     }
 
-    const itemStyles = styleItem({msg, checkBG})
+    const itemStyles = styleItem({ msg, checkBG })
 
     const chooseRef = () => {
       if (index == 0) {
@@ -225,9 +225,9 @@ export const Inapp = (props: InappProps) => {
   const onLoad = async () => {
     let temp: any = []
     const messages = JSON.parse(await AsyncStorage.getItem('inngage') ?? '[]')
-    
+
     console.log("Messages saved on AsyncStorage: ", JSON.stringify(messages))
-    
+
     if (messages !== null) {
       messages.forEach((el) => {
         if (!isEmpty(el)) {
@@ -294,7 +294,13 @@ export const Inapp = (props: InappProps) => {
                   layoutCardOffset={10}
                   data={data}
                   inactiveSlideOpacity={0}
-                  containerCustomStyle={styles.carouselContainer}
+                  containerCustomStyle={{
+                    backgroundColor: 'white',
+                    elevation: 10,
+                    borderRadius: 10,
+                    width: SLIDER_WIDTH * 0.8,
+                    height: 480,
+                  }}
                   contentContainerCustomStyle={{ justifyContent: 'center' }}
                   inactiveSlideShift={0}
                   onSnapToItem={(index) => {
@@ -315,4 +321,4 @@ export const Inapp = (props: InappProps) => {
   }
 };
 
-const styles = styleInapp({SLIDER_WIDTH})
+const styles = styleInapp({ SLIDER_WIDTH })
