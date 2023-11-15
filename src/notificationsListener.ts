@@ -69,6 +69,23 @@ const openCommonNotification = ({ appToken, dev, remoteMessage, enableAlert, sta
   return notificationApi(request, dev)
 }
 
+const handleUniqueRemoteMessage = async (
+  remoteMessage: { messageId?: string },
+  handleInitialNotification: (value: { messageId?: string }) => void
+) => {
+  try {
+    const lastRemoteMessageId = await AsyncStorage.getItem('LAST_REMOTE_MESSAGE_ID');
+    const newRemoteMessageId = remoteMessage?.messageId;
+
+    if (newRemoteMessageId && lastRemoteMessageId !== newRemoteMessageId) {
+      await AsyncStorage.setItem('LAST_REMOTE_MESSAGE_ID', newRemoteMessageId);
+      handleInitialNotification(remoteMessage);
+    }
+  } catch (e) {
+    console.log(e);
+  }
+};
+
 export interface notificationsListenerProps {
   appToken: string,
   dev?: boolean,
@@ -79,8 +96,13 @@ export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }: n
   var messageArray: any = [];
 
   if (typeof onNotificationOpenedApp == 'function') {
-    messaging().getInitialNotification().then((value) => {
+    messaging().getInitialNotification().then(async (value) => {
       onNotificationOpenedApp(value?.data);
+      // console.log("Remote message ID:", value?.messageId)
+      if (value !== null)
+        handleUniqueRemoteMessage(value, async (value) => {
+          await handleInitialNotification(value);
+        });
     });
   }
 
@@ -157,21 +179,11 @@ export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }: n
   messaging().setBackgroundMessageHandler(handleBackgroundMessage)
   messaging().onNotificationOpenedApp(handleNotificationOpenedApp)
   messaging().getInitialNotification().then(async (remoteMessage) => {
-    console.log("Remote message ID:", remoteMessage?.messageId)
-    try {
-      const lastRemoteMessageId = await AsyncStorage.getItem('LAST_REMOTE_MESSAGE_ID');
-      const newRemoteMessageId = remoteMessage?.messageId;
-
-      console.log("Last RM Id:", lastRemoteMessageId);
-      console.log("New RM Id:", newRemoteMessageId);
-
-      if (newRemoteMessageId && lastRemoteMessageId !== newRemoteMessageId) {
-        await AsyncStorage.setItem('LAST_REMOTE_MESSAGE_ID', newRemoteMessageId);
-        return handleInitialNotification(remoteMessage);
-      }
-    } catch (e) {
-      console.log(e);
-    }
+    // console.log("Remote message ID:", remoteMessage?.messageId)
+    if (remoteMessage !== null)
+      handleUniqueRemoteMessage(remoteMessage, async (value) => {
+        await handleInitialNotification(value);
+      });
   })
   messaging().onMessage(handleForegroundMessage)
 }
