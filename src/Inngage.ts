@@ -1,10 +1,3 @@
-import {
-  Platform,
-  PermissionsAndroid,
-  LogBox,
-  AppRegistry,
-} from "react-native";
-
 import { firebase } from '@react-native-firebase/messaging';
 import DeviceInfo from "react-native-device-info";
 import * as RNLocalize from "react-native-localize";
@@ -14,51 +7,56 @@ import { formatDate, subscriptionRequestAdapter } from "./utils";
 import notificationsListener, { notificationsListenerProps } from "./notificationsListener";
 import { subscriptionApi, eventsApi } from "./services/inngage";
 
+import { PERMISSIONS, RESULTS, request } from 'react-native-permissions';
+
 // --- Get Firebase Access ------/
 const getFirebaseAccess = async (): Promise<string | null> => {
   try {
-    const apiLevel = await DeviceInfo.getApiLevel();
-
-    if (apiLevel >= 33) {
-      await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
-      );
-    }
-
-    const authStatus = await firebase.messaging().requestPermission();
-
-    const enabled =
-      authStatus === firebase.messaging.AuthorizationStatus.AUTHORIZED ||
-      authStatus === firebase.messaging.AuthorizationStatus.PROVISIONAL;
-
-    if (enabled) {
-      let fcmToken = await AsyncStorage.getItem('fcmToken');
-      console.log('Old token: ', fcmToken);
-
-      if (!fcmToken) {
-        if (!firebase.messaging().isDeviceRegisteredForRemoteMessages) {
-          await firebase.messaging().registerDeviceForRemoteMessages();
-        }
-
-        const newFcmToken = await firebase.messaging().getToken();
-
-        if (newFcmToken) {
-          await AsyncStorage.setItem('fcmToken', newFcmToken);
-          console.log('New token: ', newFcmToken);
-          return newFcmToken;
-        }
-      }
-
-      console.log('Authorization status:', authStatus);
-      return fcmToken;
-    }
-
+    await handleNotificationsPermission()
     return null;
   } catch (error) {
     console.log('Erro no getFirebaseAccess: ', error);
     throw error;
   }
 };
+
+async function handleNotificationsPermission() {
+  const apiLevel = await DeviceInfo.getApiLevel();
+  if (apiLevel >= 33) {
+    const result = await request(PERMISSIONS.ANDROID.POST_NOTIFICATIONS);
+    if (result === RESULTS.GRANTED) {
+      await getFirebaseToken();
+    }
+  } else {
+    const authStatus = await firebase.messaging().requestPermission();
+    const enabled =
+      authStatus === firebase.messaging.AuthorizationStatus.AUTHORIZED ||
+      authStatus === firebase.messaging.AuthorizationStatus.PROVISIONAL;
+
+    if (enabled) {
+      await getFirebaseToken();
+    }
+  }
+}
+
+const getFirebaseToken = async (): Promise<string | null> => {
+  let fcmToken = await AsyncStorage.getItem('fcmToken');
+
+  if (!fcmToken) {
+    if (!firebase.messaging().isDeviceRegisteredForRemoteMessages) {
+      await firebase.messaging().registerDeviceForRemoteMessages();
+    }
+
+    const newFcmToken = await firebase.messaging().getToken();
+
+    if (newFcmToken) {
+      await AsyncStorage.setItem('fcmToken', newFcmToken);
+      return newFcmToken;
+    }
+  }
+
+  return fcmToken;
+}
 
 interface SubscriptionProps {
   appToken: string,
