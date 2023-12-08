@@ -7,56 +7,58 @@ import { formatDate, subscriptionRequestAdapter } from "./utils";
 import notificationsListener, { notificationsListenerProps } from "./notificationsListener";
 import { subscriptionApi, eventsApi } from "./services/inngage";
 
-import { PERMISSIONS, RESULTS, request } from 'react-native-permissions';
+import RNPermissions, { NotificationOption, RESULTS } from 'react-native-permissions';
 
 // --- Get Firebase Access ------/
 const getFirebaseAccess = async (): Promise<string | null> => {
   try {
-    await handleNotificationsPermission()
-    return null;
+    return await handleNotificationsPermission();
   } catch (error) {
     console.log('Erro no getFirebaseAccess: ', error);
     throw error;
   }
 };
 
-async function handleNotificationsPermission() {
-  const apiLevel = await DeviceInfo.getApiLevel();
-  if (apiLevel >= 33) {
-    const result = await request(PERMISSIONS.ANDROID.POST_NOTIFICATIONS);
-    if (result === RESULTS.GRANTED) {
-      await getFirebaseToken();
-    }
-  } else {
-    const authStatus = await firebase.messaging().requestPermission();
-    const enabled =
-      authStatus === firebase.messaging.AuthorizationStatus.AUTHORIZED ||
-      authStatus === firebase.messaging.AuthorizationStatus.PROVISIONAL;
+const handleNotificationsPermission = async () => {
+  try {
+    const options: NotificationOption[] = ['alert', 'badge', 'sound'];
+    const apiLevel = await DeviceInfo.getApiLevel();
+    const isPermissionGranted =
+      apiLevel >= 33
+        ? ((await RNPermissions.requestNotifications(options)).status) === RESULTS.GRANTED
+        : (await firebase.messaging().requestPermission()) ===
+        firebase.messaging.AuthorizationStatus.AUTHORIZED ||
+        firebase.messaging.AuthorizationStatus.PROVISIONAL;
 
-    if (enabled) {
-      await getFirebaseToken();
-    }
+    return isPermissionGranted ? await getFirebaseToken() : null;
+  } catch (error) {
+    console.error(error);
+    throw error;
   }
-}
+};
 
 const getFirebaseToken = async (): Promise<string | null> => {
-  let fcmToken = await AsyncStorage.getItem('fcmToken');
+  try {
+    let fcmToken = await AsyncStorage.getItem('fcmToken');
 
-  if (!fcmToken) {
-    if (!firebase.messaging().isDeviceRegisteredForRemoteMessages) {
-      await firebase.messaging().registerDeviceForRemoteMessages();
+    if (!fcmToken) {
+      if (!firebase.messaging().isDeviceRegisteredForRemoteMessages) {
+        await firebase.messaging().registerDeviceForRemoteMessages?.();
+      }
+
+      const newFcmToken = await firebase.messaging().getToken?.();
+
+      if (newFcmToken) {
+        await AsyncStorage.setItem('fcmToken', newFcmToken);
+        return newFcmToken;
+      }
     }
-
-    const newFcmToken = await firebase.messaging().getToken();
-
-    if (newFcmToken) {
-      await AsyncStorage.setItem('fcmToken', newFcmToken);
-      return newFcmToken;
-    }
+    return fcmToken || null;
+  } catch (error) {
+    console.error(error);
+    throw error;
   }
-
-  return fcmToken;
-}
+};
 
 interface SubscriptionProps {
   appToken: string,
