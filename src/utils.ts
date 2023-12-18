@@ -40,6 +40,10 @@ export const subscriptionRequestAdapter = (sdkRequest, useCustomData, customData
   };
 }
 
+export const eventRequest = (request) => {
+  return { ...request }
+}
+
 export const isEmpty = (obj: any) => {
   for (var prop in obj) {
     if (obj.hasOwnProperty(prop)) {

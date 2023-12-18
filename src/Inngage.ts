@@ -3,7 +3,7 @@ import DeviceInfo from "react-native-device-info";
 import * as RNLocalize from "react-native-localize";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { formatDate, subscriptionRequestAdapter } from "./utils";
+import { eventRequest, formatDate, subscriptionRequestAdapter } from "./utils";
 import notificationsListener, { notificationsListenerProps } from "./notificationsListener";
 import { subscriptionApi, eventsApi } from "./services/inngage";
 
@@ -87,6 +87,17 @@ interface SendEventProps {
     }
   },
 }
+
+interface SendEventProps {
+  appToken: string,
+  identifier: string,
+  eventName: string,
+  conversionEvent?: boolean,
+  conversionValue?: number,
+  conversionNotId?: string,
+  eventValues?: any
+}
+
 const Inngage = {
   // ------------  Register Notification Listener ------------//
   RegisterNotificationListener: async (props: notificationsListenerProps) => {
@@ -150,14 +161,36 @@ const Inngage = {
       return { subscribed: false };
     }
   },
-  SendEvent: async (props: SendEventProps) => {
+
+  SendEvent: async ({
+    appToken,
+    identifier,
+    eventName,
+    conversionEvent,
+    conversionValue,
+    conversionNotId,
+    eventValues,
+  }: SendEventProps) => {
+
+    const rawRequest = {
+      newEventRequest: {
+        app_token: appToken,
+        identifier: identifier,
+        event_name: eventName,
+        conversion_event: conversionEvent ?? false,
+        conversion_value: conversionValue ?? 0,
+        conversion_notid: conversionNotId ?? '',
+        event_values: eventValues ?? {}
+      }
+    };
+
+    const request = eventRequest(rawRequest)
     try {
-      return await eventsApi(props);
+      return await eventsApi(request);
     } catch (e) {
       console.error(e)
       return { subscribed: false };
     }
-
   }
 }
 

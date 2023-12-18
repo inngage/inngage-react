@@ -17,20 +17,13 @@ interface SubscriptionProps {
 }
 
 interface SendEventProps {
-    newEventRequest: {
-        app_token: string;
-        identifier: string;
-        event_name: string;
-        conversion_event: boolean;
-        conversion_value: number;
-        conversion_notid: string;
-        event_values: {
-            nome_promo: string;
-            categoria: string;
-            foto_promo: string;
-            redirect_link: string;
-        };
-    };
+    appToken: string,
+    identifier: string,
+    eventName: string,
+    conversionEvent?: boolean,
+    conversionValue?: number,
+    conversionNotId?: string,
+    eventValues?: any
 }
 
 declare const Inngage: {
