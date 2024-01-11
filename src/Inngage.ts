@@ -72,26 +72,10 @@ interface SubscriptionProps {
 }
 
 interface SendEventProps {
-  newEventRequest: {
-    app_token: string,
-    identifier: string,
-    event_name: string,
-    conversion_event: boolean,
-    conversion_value: number,
-    conversion_notid: string,
-    event_values: {
-      nome_promo: string,
-      categoria: string,
-      foto_promo: string,
-      redirect_link: string
-    }
-  },
-}
-
-interface SendEventProps {
   appToken: string,
-  identifier: string,
   eventName: string,
+  identifier?: string,
+  registration?: string,
   conversionEvent?: boolean,
   conversionValue?: number,
   conversionNotId?: string,
@@ -164,8 +148,9 @@ const Inngage = {
 
   SendEvent: async ({
     appToken,
-    identifier,
     eventName,
+    identifier,
+    registration,
     conversionEvent,
     conversionValue,
     conversionNotId,
@@ -176,6 +161,7 @@ const Inngage = {
       newEventRequest: {
         app_token: appToken,
         identifier: identifier,
+        registration: registration,
         event_name: eventName,
         conversion_event: conversionEvent ?? false,
         conversion_value: conversionValue ?? 0,

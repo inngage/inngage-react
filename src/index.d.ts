@@ -18,8 +18,9 @@ interface SubscriptionProps {
 
 interface SendEventProps {
     appToken: string,
-    identifier: string,
     eventName: string,
+    identifier?: string,
+    registration?: string,
     conversionEvent?: boolean,
     conversionValue?: number,
     conversionNotId?: string,
