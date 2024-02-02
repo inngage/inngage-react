@@ -18,7 +18,7 @@ import { showAlertLink, isEmpty } from "../utils";
 // import { linkInApp } from "../notificationsListener";
 import { styleInapp, styleItem } from './styles';
 
-import Carousel from 'react-native-reanimated-carousel';
+// import Carousel from 'react-native-reanimated-carousel';
 
 const SLIDER_WIDTH = Dimensions.get('window').width;
 const SLIDER_HEIGHT = Dimensions.get('window').height;
@@ -302,13 +302,13 @@ export const Inapp = (props: InappProps) => {
         >
           <View style={styles.centeredView}>
             <View style={styles.styleContainer}>
-              <Carousel
+              {/* <Carousel
                 loop
                 width={sliderWidth}
                 data={data}
                 renderItem={({ index }) => (
                   <Image style={itemStyles.img} source={{ uri: inAppData.rich_content[index] }}></Image>
-                )} />
+                )} /> */}
               <Text style={itemStyles.title}>{inAppData.title}</Text>
               <Text style={itemStyles.bodyText}>{inAppData.body}</Text>
               <View style={itemStyles.containerButtons}>
