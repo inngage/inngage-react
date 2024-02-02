@@ -1,36 +1,36 @@
 import { Linking } from 'react-native'
-import InAppBrowser from 'react-native-inappbrowser-reborn'
+// import InAppBrowser from 'react-native-inappbrowser-reborn'
 import messaging from '@react-native-firebase/messaging';
 import { showAlert } from './utils'
 import { notificationApi } from './services/inngage'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PushNotification, { Importance } from 'react-native-push-notification'
 
-export const linkInApp = (link: string) => {
-  InAppBrowser.open(link, {
-    dismissButtonStyle: 'cancel',
-    preferredBarTintColor: 'gray',
-    preferredControlTintColor: 'white',
-    readerMode: false,
-    showTitle: true,
-    toolbarColor: '#6200EE',
-    secondaryToolbarColor: 'black',
-    enableUrlBarHiding: true,
-    enableDefaultShare: true,
-    forceCloseOnRedirection: false,
-    animations: {
-      startEnter: 'slide_in_right',
-      startExit: 'slide_out_left',
-      endEnter: 'slide_in_right',
-      endExit: 'slide_out_left',
-    },
-  })
-}
+// export const linkInApp = (link: string) => {
+//   InAppBrowser.open(link, {
+//     dismissButtonStyle: 'cancel',
+//     preferredBarTintColor: 'gray',
+//     preferredControlTintColor: 'white',
+//     readerMode: false,
+//     showTitle: true,
+//     toolbarColor: '#6200EE',
+//     secondaryToolbarColor: 'black',
+//     enableUrlBarHiding: true,
+//     enableDefaultShare: true,
+//     forceCloseOnRedirection: false,
+//     animations: {
+//       startEnter: 'slide_in_right',
+//       startExit: 'slide_out_left',
+//       endEnter: 'slide_in_right',
+//       endExit: 'slide_out_left',
+//     },
+//   })
+// }
 
 const openLinkByType = (type: string, url: string) => {
   const linkTypeHandlers: Record<string, () => void> = {
     deep: () => Linking.openURL(url),
-    inapp: () => linkInApp(url),
+    // inapp: () => linkInApp(url),
   };
 
   const handler = linkTypeHandlers[type];

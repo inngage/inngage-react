@@ -24,7 +24,6 @@
     "@react-native-firebase/app": "^17.4.2",
     "@react-native-firebase/messaging": "^17.4.2",
     "react-native-device-info": "^10.6.0",
-    "react-native-inappbrowser-reborn": "^3.7.0",
     "react-native-localize": "^2.2.6",
     "react-native-permissions": "^3.8.0",
     "react-native-push-notification": "^8.1.1",

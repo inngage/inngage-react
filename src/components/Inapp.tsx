@@ -15,7 +15,7 @@ import {
 import DeviceInfo from "react-native-device-info";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { showAlertLink, isEmpty } from "../utils";
-import { linkInApp } from "../notificationsListener";
+// import { linkInApp } from "../notificationsListener";
 import { styleInapp, styleItem } from './styles';
 
 import Carousel from 'react-native-reanimated-carousel';
@@ -131,7 +131,7 @@ export const Inapp = (props: InappProps) => {
         return
       }
       console.log(title, body, url, type)
-      const openLinkByType = (type, url) => (type === 'deep' ? Linking.openURL(url) : linkInApp(url))
+      const openLinkByType = (type, url) => (type === 'deep' ? Linking.openURL(url) : null)
 
       return Linking.canOpenURL(url).then((supported) => {
         if (supported) {
