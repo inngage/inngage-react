@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { addUserDataRequest, eventRequest, formatDate, subscriptionRequestAdapter } from "./utils";
 import notificationsListener, { notificationsListenerProps } from "./notificationsListener";
 import { subscriptionApi, eventsApi, addUserDataApi } from "./services/inngage";
+import { InngageProperties } from './models/inngage_properties';
 
 import RNPermissions, { NotificationOption, RESULTS } from 'react-native-permissions';
 
