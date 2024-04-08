@@ -103,6 +103,9 @@ const Inngage = {
     phoneNumber,
     email,
   }: SubscriptionProps) => {
+    InngageProperties.appToken = appToken;
+    InngageProperties.identifier = friendlyIdentifier!;
+
     try {
       const respToken = await getFirebaseAccess()
 
