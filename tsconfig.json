@@ -11,7 +11,10 @@
     "skipLibCheck": true,
     "moduleResolution": "node",
     "noImplicitAny": false,
-    "lib": [ "es2015" ]
+    "lib": [
+      "dom",
+      "es2015"
+    ]
   },
   "include": [
     "**/*"

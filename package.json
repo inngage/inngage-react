@@ -1,6 +1,6 @@
 {
   "name": "@inngageregistry/inngage-react",
-  "version": "3.3.0-alpha.6",
+  "version": "3.3.0",
   "description": "Inngage Plugin for React Native applications for marketing campaign optimization using Push Notification.",
   "main": "src/index.ts",
   "types": "src/index.d.ts",
@@ -24,9 +24,11 @@
     "@react-native-firebase/app": "^17.4.2",
     "@react-native-firebase/messaging": "^17.4.2",
     "react-native-device-info": "^10.6.0",
+    "react-native-inappbrowser-reborn": "^3.7.0",
     "react-native-localize": "^2.2.6",
     "react-native-permissions": "^3.8.0",
-    "react-native-push-notification": "^8.1.1"
+    "react-native-push-notification": "^8.1.1",
+    "react-native-snap-carousel": "^3.9.1"
   },
   "devDependencies": {
     "@types/jest": "^29.5.1",
