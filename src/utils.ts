@@ -44,6 +44,10 @@ export const eventRequest = (request) => {
   return { ...request }
 }
 
+export const addUserDataRequest = (request) => {
+  return { ...request }
+}
+
 export const isEmpty = (obj: any) => {
   for (var prop in obj) {
     if (obj.hasOwnProperty(prop)) {

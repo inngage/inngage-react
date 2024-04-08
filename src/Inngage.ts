@@ -3,9 +3,9 @@ import DeviceInfo from "react-native-device-info";
 import * as RNLocalize from "react-native-localize";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { eventRequest, formatDate, subscriptionRequestAdapter } from "./utils";
+import { addUserDataRequest, eventRequest, formatDate, subscriptionRequestAdapter } from "./utils";
 import notificationsListener, { notificationsListenerProps } from "./notificationsListener";
-import { subscriptionApi, eventsApi } from "./services/inngage";
+import { subscriptionApi, eventsApi, addUserDataApi } from "./services/inngage";
 
 import RNPermissions, { NotificationOption, RESULTS } from 'react-native-permissions';
 
@@ -92,6 +92,7 @@ const Inngage = {
       return { subscribed: false };
     }
   },
+
   Subscribe: async ({
     appToken,
     dev,
@@ -176,6 +177,23 @@ const Inngage = {
     } catch (e) {
       console.error(e)
       return { subscribed: false };
+    }
+  },
+
+  async addUserData(customFields: any): Promise<any> {
+    const rawRequest = {
+      fieldsRequest: {
+        app_token: InngageProperties.appToken,
+        identifier: InngageProperties.identifier,
+        custom_field: customFields ?? {}
+      }
+    };
+
+    const request = addUserDataRequest(rawRequest);
+    try {
+      return await addUserDataApi(request);
+    } catch (e) {
+      console.error(e);
     }
   }
 }

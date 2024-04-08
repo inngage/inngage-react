@@ -15,3 +15,8 @@ export const eventsApi = (request, dev = false) => {
     console.log('eventsApi', request)
   return fetchClient('POST', request, '/events/newEvent/', !!dev)
 }
+export const addUserDataApi = (request, dev = false) => {
+  if (dev)
+    console.log('addUserData', request)
+  return fetchClient('POST', request, '/subscription/addCustomField', !!dev)
+}
