@@ -2,30 +2,24 @@ import { StyleSheet } from "react-native";
 
 
 interface styleInappProps {
-  inAppData: any;
   SLIDER_WIDTH: number;
 }
-export const styleInapp = ({ inAppData, SLIDER_WIDTH }: styleInappProps) => StyleSheet.create({
-  centeredView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+export const styleInapp = ({ SLIDER_WIDTH }: styleInappProps) => StyleSheet.create({
   carouselContainer: {
     width: "100%",
     marginTop: 10,
   },
   styleContainer: {
-    alignItems: 'center',
-    backgroundColor: inAppData.background_color || 'white',
+    backgroundColor: 'white',
     elevation: 10,
     borderRadius: 10,
     width: SLIDER_WIDTH * 0.8,
+    height: 480,
   },
-  // counter: {
-  //   alignSelf: 'center',
-  //   marginVertical: 10
-  // },
+  counter: {
+    alignSelf: 'center',
+    marginVertical: 10
+  },
   closeButton: {
     position: 'absolute',
     alignSelf: 'flex-end',
@@ -42,66 +36,62 @@ export const styleInapp = ({ inAppData, SLIDER_WIDTH }: styleInappProps) => Styl
 });
 
 interface styleItemProps {
-  inAppData: any,
+  msg: any,
+  checkBG: Function,
 }
-export const styleItem = ({ inAppData }: styleItemProps) => StyleSheet.create({
+export const styleItem = ({ msg, checkBG }: styleItemProps) => StyleSheet.create({
   btn_left: {
-    width: inAppData.btn_right != '' ? '50%' : '100%',
+    backgroundColor: msg.btn_left_bg_color || "#FFFFFF",
+    height: 40,
+    width: 100,
     alignItems: 'center',
-    backgroundColor: inAppData.btn_left_bg_color || '#DDDDDD',
-    padding: 10,
-    elevation: 10,
-    borderRadius: 5,
+    justifyContent: 'center',
+    marginRight: 20,
+    marginLeft: 10,
+    flex: 1
   },
   btn_right: {
-    width: inAppData.btn_left != '' ? '50%' : '100%',
+    backgroundColor: msg.btn_right_bg_color || "#FFFFFF",
+    height: 40,
+    width: 100,
     alignItems: 'center',
-    backgroundColor: inAppData.btn_right_bg_color || '#DDDDDD',
-    padding: 10,
-    elevation: 10,
-    borderRadius: 5,
+    justifyContent: 'center',
+    marginRight: 10,
+    flex: 1
   },
   btn_left_title: {
-    color: inAppData.btn_left_txt_color || "#000000"
+    color: msg.btn_left_txt_color || "#000000"
   },
   btn_right_title: {
-    color: inAppData.btn_right_txt_color || "#000000"
+    color: msg.btn_right_txt_color || "#000000"
   },
   body: {
-    backgroundColor: inAppData.background_color,
+    backgroundColor: checkBG(),
     width: '100%',
+    height: 450,
     alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
   },
   bodyText: {
-    color: inAppData.body_font_color || "#000000",
+    color: msg.body_font_color || "#000000",
     textAlign: 'justify',
     marginBottom: 10,
     fontSize: 15,
     marginHorizontal: 10
   },
   title: {
-    color: inAppData.title_font_color || "#000000",
+    color: msg.title_font_color || "#000000",
     fontWeight: "bold",
     fontSize: 18,
-    marginTop: 10
+    marginTop: 40
   },
   dot: {
-    backgroundColor: inAppData.dot_color || "#FFFFFF",
+    backgroundColor: msg.dot_color || "#FFFFFF",
     borderRadius: 100,
     width: 8,
     height: 8,
     marginLeft: 5,
     elevation: 5,
-  },
-  containerButtons: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    margin: 10
-  },
-  img: {
-    width: '100%',
-    height: 150
   }
 });

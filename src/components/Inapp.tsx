@@ -10,19 +10,17 @@ import {
   ImageBackground,
   Linking,
   Dimensions,
-  Button,
 } from "react-native";
 import DeviceInfo from "react-native-device-info";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { showAlertLink, isEmpty } from "../utils";
-// import { linkInApp } from "../notificationsListener";
-import { styleInapp, styleItem } from './styles';
+import Carousel, { Pagination } from 'react-native-snap-carousel';
 
-// import Carousel from 'react-native-reanimated-carousel';
+import { showAlertLink, isEmpty } from "../utils";
+import { linkInApp } from "../notificationsListener";
+import { styleInapp, styleItem } from './styles';
 
 const SLIDER_WIDTH = Dimensions.get('window').width;
 const SLIDER_HEIGHT = Dimensions.get('window').height;
-
 const ITEM_WIDTH = Math.round(SLIDER_WIDTH * 0.8);
 const ITEM_HEIGHT = Math.round(SLIDER_HEIGHT * 0.8);
 
@@ -43,14 +41,10 @@ export const Inapp = (props: InappProps) => {
   const [visible, setVisible] = useState(true)
   const [bgImage, setbgImage] = useState<any>(undefined) // TODO, need a placeholder
 
-  // const CarouselRef = useRef<Carousel<any>>(null);
+  const CarouselRef = useRef<Carousel<any>>(null);
   const ScrollRef1 = useRef<ScrollView>(null);
   const ScrollRef2 = useRef<ScrollView>(null);
   const ScrollRef3 = useRef<ScrollView>(null);
-
-  // const inAppData = JSON.parse(data[0].data.additional_data)
-  // const styles = styleInapp({ inAppData, SLIDER_WIDTH })
-  // const itemStyles = styleItem({ inAppData })
 
 
   interface _renderItemProps {
@@ -70,7 +64,7 @@ export const Inapp = (props: InappProps) => {
       }
     }
 
-    // const itemStyles = styleItem({ msg, checkBG })
+    const itemStyles = styleItem({ msg, checkBG })
 
     const chooseRef = () => {
       if (index == 0) {
@@ -85,53 +79,53 @@ export const Inapp = (props: InappProps) => {
     }
 
 
-    // const pagination = ref => {
-    //   return (
-    //     <Pagination
-    //       dotsLength={arrayImgs.length}
-    //       activeDotIndex={indIm}
-    //       containerStyle={{ height: 2, padding: 0, margin: 0 }}
-    //       renderDots={(activeIndex, total, context) => {
-    //         let dots: any = []
-    //         var size = 0
-    //         for (let i = 0; i < total; i++) {
-    //           if (activeIndex == i) {
-    //             size = 13
-    //           } else {
-    //             size = 8
-    //           }
-    //           dots.push(
-    //             <TouchableOpacity
-    //               onPress={() => {
-    //                 ref.current.scrollTo({ x: i * 220, y: 0, animated: true })
-    //                 if (i * 220 === 0) {
-    //                   setIndImg(0)
-    //                 } else if (i * 220 === 220) {
-    //                   setIndImg(1)
-    //                 } else if (i * 220 === 440) {
-    //                   setIndImg(2)
-    //                 }
-    //               }}
-    //               key={i.toString()}
-    //             // style={[itemStyles.dot, { width: size, height: size }]}
-    //             />
-    //           )
-    //         }
-    //         return (
-    //           dots
-    //         )
-    //       }
-    //       }
-    //     />
-    //   );
-    // }
+    const pagination = ref => {
+      return (
+        <Pagination
+          dotsLength={arrayImgs.length}
+          activeDotIndex={indIm}
+          containerStyle={{ height: 2, padding: 0, margin: 0 }}
+          renderDots={(activeIndex, total, context) => {
+            let dots: any = []
+            var size = 0
+            for (let i = 0; i < total; i++) {
+              if (activeIndex == i) {
+                size = 13
+              } else {
+                size = 8
+              }
+              dots.push(
+                <TouchableOpacity
+                  onPress={() => {
+                    ref.current.scrollTo({ x: i * 220, y: 0, animated: true })
+                    if (i * 220 === 0) {
+                      setIndImg(0)
+                    } else if (i * 220 === 220) {
+                      setIndImg(1)
+                    } else if (i * 220 === 440) {
+                      setIndImg(2)
+                    }
+                  }}
+                  key={i.toString()}
+                  style={[itemStyles.dot, { width: size, height: size }]}
+                />
+              )
+            }
+            return (
+              dots
+            )
+          }
+          }
+        />
+      );
+    }
 
     const handleButton = (title: string, body: string, url: string, type: string) => {
       if (type === '' || url === '') {
         return
       }
       console.log(title, body, url, type)
-      const openLinkByType = (type, url) => (type === 'deep' ? Linking.openURL(url) : null)
+      const openLinkByType = (type, url) => (type === 'deep' ? Linking.openURL(url) : linkInApp(url))
 
       return Linking.canOpenURL(url).then((supported) => {
         if (supported) {
@@ -171,11 +165,10 @@ export const Inapp = (props: InappProps) => {
         )
       }
     }
-
-    // return (
-    // <View style={[itemStyles.body]}>
-    //   <Text style={[itemStyles.title, props.titleStyle]}>{msg.title}</Text>
-    {/* <ScrollView
+    return (
+      <View style={[itemStyles.body]}>
+        <Text style={[itemStyles.title, props.titleStyle]}>{msg.title}</Text>
+        <ScrollView
           ref={chooseRef()}
           horizontal
           snapToInterval={220}
@@ -207,26 +200,22 @@ export const Inapp = (props: InappProps) => {
           msg.rich_content.carousel == true ?
             pagination(chooseRef()) : null
 
-        } */}
-    /* <Text style={[itemStyles.bodyText, props.bodyStyle]}>{msg.body}</Text>
-    <View style={{ flexDirection: "row", marginBottom: 0, justifyContent: 'center' }}>
-      {msg.btn_left_txt != null
-        ? <TouchableOpacity onPress={() => handleButton(msg.title, msg.body, msg.btn_left_action_link, msg.btn_left_action_type)} style={[itemStyles.btn_left, props.buttonLeftStyle]}>
-          <View>
-            <Text style={[itemStyles.btn_left_title, props.buttonTitleLeftStyle]}>{msg.btn_left_txt}</Text>
-          </View>
-        </TouchableOpacity>
-        : null}
-      {msg.btn_left_txt != null
-        ? <TouchableOpacity onPress={() => handleButton(msg.title, msg.body, msg.btn_right_action_link, msg.btn_right_action_type)} style={[itemStyles.btn_right, props.buttonRightStyle]}>
-          <View>
-            <Text style={[itemStyles.btn_right_title, props.buttonTitleRightStyle]}>{msg.btn_right_txt}</Text>
-          </View>
-        </TouchableOpacity>
-        : null}
-    </View> */
-    // </View>
-    // );
+        }
+        <Text style={[itemStyles.bodyText, props.bodyStyle]}>{msg.body}</Text>
+        <View style={{ flexDirection: "row", marginBottom: 0, justifyContent: 'center' }}>
+          <TouchableOpacity onPress={() => handleButton(msg.title, msg.body, msg.btn_left_action_link, msg.btn_left_action_type)} style={[itemStyles.btn_left, props.buttonLeftStyle]}>
+            <View>
+              <Text style={[itemStyles.btn_left_title, props.buttonTitleLeftStyle]}>{msg.btn_left_txt}</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleButton(msg.title, msg.body, msg.btn_right_action_link, msg.btn_right_action_type)} style={[itemStyles.btn_right, props.buttonRightStyle]}>
+            <View>
+              <Text style={[itemStyles.btn_right_title, props.buttonTitleRightStyle]}>{msg.btn_right_txt}</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
   }
 
   useEffect(() => {
@@ -279,65 +268,26 @@ export const Inapp = (props: InappProps) => {
   }
 
   if (data.length > 0) {
-    const inAppData = JSON.parse(data[0].data.additional_data)
-    const styles = styleInapp({ inAppData, SLIDER_WIDTH })
-    const itemStyles = styleItem({ inAppData })
-
-    const { width: screenWidth } = Dimensions.get('window')
-
-    const sliderWidth = screenWidth;
-    const itemWidth = screenWidth * 8;
-
-    const _renderItemCarrousel = ({ item }) => {
-      <Image style={itemStyles.img} source={{ uri: inAppData.rich_content[item] }}></Image>
-    }
-
-    console.log(inAppData.rich_content)
     return (
-      <View style={styles.centeredView}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
         <Modal
           animationType='slide'
           visible={visible}
           transparent={true}
-        >
-          <View style={styles.centeredView}>
-            <View style={styles.styleContainer}>
-              {/* <Carousel
-                loop
-                width={sliderWidth}
-                data={data}
-                renderItem={({ index }) => (
-                  <Image style={itemStyles.img} source={{ uri: inAppData.rich_content[index] }}></Image>
-                )} /> */}
-              <Text style={itemStyles.title}>{inAppData.title}</Text>
-              <Text style={itemStyles.bodyText}>{inAppData.body}</Text>
-              <View style={itemStyles.containerButtons}>
-                <TouchableOpacity
-                  onPress={() => { }}
-                  style={[itemStyles.btn_left, props.buttonLeftStyle]}>
-                  <View>
-                    <Text style={[itemStyles.btn_left_title, props.buttonTitleLeftStyle]}>{inAppData.btn_left_txt}</Text>
-                  </View>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => { }} style={[itemStyles.btn_right, props.buttonRightStyle]}>
-                  <View>
-                    <Text style={[itemStyles.btn_right_title, props.buttonTitleRightStyle]}>{inAppData.btn_right_txt}</Text>
-                  </View>
-                </TouchableOpacity>
-              </View>
-
-              {/* <ImageBackground style={{ width: '100%', alignItems: 'center', justifyContent: 'center' }} resizeMode='cover' imageStyle={{ borderRadius: 10, alignSelf: 'stretch', height: 480 }} source={bgImage}> */}
-              <TouchableHighlight
-                onPress={() => handleClose()}
-                underlayColor='#cccccc'
-                style={styles.closeButton}
-              >
-                <Text style={{ fontWeight: 'bold', color: '#ffffff' }}>
-                  X
-                </Text>
-              </TouchableHighlight>
-
-              {/* <Carousel
+          style={{ justifyContent: 'center', alignItems: 'center', backgroundColor: 'blue' }}
+        ><View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={[styles.styleContainer, props.styleContainer]}>
+              <ImageBackground style={{ width: '100%', alignItems: 'center', justifyContent: 'center' }} resizeMode='cover' imageStyle={{ borderRadius: 10, alignSelf: 'stretch', height: 480 }} source={bgImage}>
+                <TouchableHighlight
+                  onPress={() => handleClose()}
+                  underlayColor='#cccccc'
+                  style={styles.closeButton}
+                >
+                  <Text style={{ fontWeight: 'bold', color: '#ffffff' }}>
+                    X
+                  </Text>
+                </TouchableHighlight>
+                <Carousel
                   vertical
                   ref={CarouselRef}
                   layout={'default'}
@@ -359,16 +309,16 @@ export const Inapp = (props: InappProps) => {
                   renderItem={({ item, index }) => _renderItem({ item, index })}
                   sliderHeight={500}
                   itemHeight={500}
-                /> */}
-              {/* </ImageBackground> */}
+                />
+              </ImageBackground>
             </View>
           </View>
         </Modal>
-      </View >
+      </View>
     );
   } else {
     return null
   }
 };
 
-
+const styles = styleInapp({ SLIDER_WIDTH })
