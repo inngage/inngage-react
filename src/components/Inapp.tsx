@@ -124,7 +124,6 @@ export const Inapp = (props: InappProps) => {
       if (type === '' || url === '') {
         return
       }
-      console.log(title, body, url, type)
       const openLinkByType = (type, url) => (type === 'deep' ? Linking.openURL(url) : linkInApp(url))
 
       return Linking.canOpenURL(url).then((supported) => {
@@ -225,8 +224,6 @@ export const Inapp = (props: InappProps) => {
   const onLoad = async () => {
     let temp: any = []
     const messages = JSON.parse(await AsyncStorage.getItem('inngage') ?? '[]')
-
-    console.log("Messages saved on AsyncStorage: ", JSON.stringify(messages))
 
     if (messages !== null) {
       messages.forEach((el) => {

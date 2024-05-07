@@ -15,7 +15,7 @@ const getFirebaseAccess = async (): Promise<string | null> => {
   try {
     return await handleNotificationsPermission();
   } catch (error) {
-    console.log('Erro no getFirebaseAccess: ', error);
+    console.error('Erro no getFirebaseAccess: ', error);
     throw error;
   }
 };
@@ -143,7 +143,6 @@ const Inngage = {
 
       const request = subscriptionRequestAdapter(rawRequest, customData, customFields)
       const subscribe = await subscriptionApi(request, dev);
-      console.log(await subscribe.json())
       return subscribe;
     } catch (e) {
       console.error(e);

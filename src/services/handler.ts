@@ -11,16 +11,16 @@ const requestConfigFactory = (method, request) => {
     Accept: 'application/json',
     'Content-Type': 'application/json',
   }
-  try{
+  try {
     if (request?.registerSubscriberRequest?.authKey) {
       header = {
         ...header,
         Authorization: request.registerSubscriberRequest.authKey
       }
     }
- }catch(e){
-   console.error(e)
- }
+  } catch (e) {
+    console.error(e)
+  }
   let objToSend = {
     method,
     body: JSON.stringify(request),
@@ -34,7 +34,6 @@ export const fetchClient = (method, requestBody, path, isDev = false): Promise<R
   return new Promise((resolve) => {
     const url = String(baseUrlHook[isDev as any]).concat(path)
     const request = requestConfigFactory(method, requestBody)
-    console.log(request)
     fetch(url, request)
       .then(resolve)
       .catch(err => console.error('Fetch Error', err))

@@ -40,13 +40,10 @@ const openLinkByType = (type: string, url: string) => {
 };
 
 const openCommonNotification = ({ appToken, dev, remoteMessage, enableAlert, state }) => {
-  console.log("Notification Opened from", state)
-
   if (!remoteMessage)
     return
 
   const { data } = remoteMessage
-  console.log("Data:", data)
   if (!data || (data && !Object.keys(data).length))
     return
 
@@ -82,7 +79,7 @@ const handleUniqueRemoteMessage = async (
       handleInitialNotification(remoteMessage);
     }
   } catch (e) {
-    console.log(e);
+    console.error(e);
   }
 };
 
@@ -98,7 +95,6 @@ export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }: n
   if (typeof onNotificationOpenedApp == 'function') {
     messaging().getInitialNotification().then(async (value) => {
       onNotificationOpenedApp(value?.data);
-      // console.log("Remote message ID:", value?.messageId)
       if (value !== null)
         handleUniqueRemoteMessage(value, async (value) => {
           await handleInitialNotification(value);
@@ -107,7 +103,6 @@ export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }: n
   }
 
   const handleBackgroundMessage = async (remoteMessage: any) => {
-    console.log('Message handled in the background!', remoteMessage);
   }
 
   const handleNotificationOpenedApp = async (remoteMessage: any) => {
@@ -122,8 +117,6 @@ export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }: n
     try {
       PushNotification.configure({
         onNotification: function (notification) {
-          console.log('LOCAL NOTIFICATION ==>', notification)
-
           openCommonNotification({ appToken, dev, remoteMessage, enableAlert, state: 'Foreground' })
         },
         popInitialNotification: true,
@@ -137,7 +130,9 @@ export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }: n
         playSound: true,
         soundName: 'default',
         vibrate: true
-      }, (created) => console.log(`createChannel returned '${created}'`));
+      }, (created) => {
+
+      });
 
     } catch (e) {
       console.error(e)
@@ -150,11 +145,7 @@ export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }: n
         vibration: 300,
         channelId: "high_importance_channel"
       });
-
-      console.log('LOCAL NOTIFICATION : ')
-      console.log(remoteMessage)
     } catch (e) {
-      console.error('LOCAL NOTIFICATION ERROR: ')
       console.error(e)
     }
 
@@ -169,7 +160,6 @@ export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }: n
         await AsyncStorage.setItem('inngage', JSON.stringify(messageArray));
       }
     } else if (remoteMessage != null && !remoteMessage.data!.additional_data) {
-      console.log(remoteMessage.data!.title)
       if (enableAlert) {
         showAlert(remoteMessage.data!.title, remoteMessage.data!.body)
       }
@@ -179,7 +169,6 @@ export default async ({ appToken, dev, enableAlert, onNotificationOpenedApp }: n
   messaging().setBackgroundMessageHandler(handleBackgroundMessage)
   messaging().onNotificationOpenedApp(handleNotificationOpenedApp)
   messaging().getInitialNotification().then(async (remoteMessage) => {
-    // console.log("Remote message ID:", remoteMessage?.messageId)
     if (remoteMessage !== null)
       handleUniqueRemoteMessage(remoteMessage, async (value) => {
         await handleInitialNotification(value);
