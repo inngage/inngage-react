@@ -199,6 +199,10 @@ const Inngage = {
     } catch (e) {
       console.error(e);
     }
+  },
+
+  setDebugMode(value: boolean) {
+    InngageProperties.debugMode = value
   }
 }
 

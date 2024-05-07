@@ -5,4 +5,9 @@ export class InngageProperties {
     static email: string = '';
     static customFields: any = {};
     static blockDeepLink: boolean = false;
+    static debugMode: boolean = false;
+    static firebaseToken: string = '';
+    static getDebugMode(): boolean {
+        return InngageProperties.debugMode;
+    }
 }
