@@ -1,6 +1,6 @@
 {
   "name": "@inngageregistry/inngage-react",
-  "version": "3.3.1-alpha.1",
+  "version": "3.3.1",
   "description": "Inngage Plugin for React Native applications for marketing campaign optimization using Push Notification.",
   "main": "src/index.ts",
   "types": "src/index.d.ts",
