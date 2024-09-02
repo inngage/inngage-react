@@ -109,16 +109,13 @@ const Inngage = {
     try {
       const respToken = await getFirebaseAccess()
 
-      const locales = RNLocalize.getLocales();
-
-      const os_locale = locales ? locales[0].countryCode : ''
-      const os_language = locales && locales.length ? locales[0].languageCode : ''
-      const device_manufacturer = await DeviceInfo.getManufacturer();
+      const { countryCode: osLocale, languageCode: osLanguage } = RNLocalize.getLocales()[0] || {};
+      const deviceManufacturer = await DeviceInfo.getManufacturer();
       const installTime = await DeviceInfo.getFirstInstallTime();
       const lastUpdateTime = await DeviceInfo.getLastUpdateTime();
       const uuid = await DeviceInfo.getUniqueId();
-      const app_installed_in = formatDate(installTime);
-      const app_updated_in = formatDate(lastUpdateTime);
+      const appInstalledIn = formatDate(installTime);
+      const appUpdatedIn = formatDate(lastUpdateTime);
 
       const rawRequest = {
         registerSubscriberRequest: {
@@ -126,18 +123,18 @@ const Inngage = {
           identifier: friendlyIdentifier,
           registration: respToken,
           platform: DeviceInfo.getSystemName(),
-          sdk: DeviceInfo.getBuildNumber(),
+          sdk: "3.3.2",
           device_model: DeviceInfo.getModel(),
-          device_manufacturer,
-          os_locale,
-          os_language,
-          os_version: DeviceInfo.getReadableVersion(),
-          app_version: DeviceInfo.getBuildNumber(),
-          app_installed_in,
-          app_updated_in,
+          device_manufacturer: deviceManufacturer,
+          os_locale: osLanguage + "_" + osLocale,
+          os_language: osLanguage + "_" + osLocale,
+          os_version: DeviceInfo.getSystemVersion(),
+          app_version: DeviceInfo.getReadableVersion(),
+          app_installed_in: appInstalledIn,
+          app_updated_in: appUpdatedIn,
           uuid,
-          phone_Number: phoneNumber,
-          email: email,
+          phone_number: phoneNumber ?? "",
+          email: email ?? "",
         }
       };
 
