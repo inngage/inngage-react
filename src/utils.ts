@@ -24,30 +24,6 @@ export const showAlertLink = (title: string, body: string, appName: string, link
   })
 }
 
-export const subscriptionRequestAdapter = (sdkRequest, useCustomData, customData) => {
-  if (useCustomData) {
-    return {
-      registerSubscriberRequest: {
-        ...sdkRequest.registerSubscriberRequest,
-        custom_field: customData
-      }
-    }
-  }
-  return {
-    registerSubscriberRequest: {
-      ...sdkRequest.registerSubscriberRequest
-    }
-  };
-}
-
-export const eventRequest = (request) => {
-  return { ...request }
-}
-
-export const addUserDataRequest = (request) => {
-  return { ...request }
-}
-
 export const isEmpty = (obj: any) => {
   for (var prop in obj) {
     if (obj.hasOwnProperty(prop)) {

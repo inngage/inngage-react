@@ -1,8 +1,11 @@
-import { Inapp } from './components/Inapp';
+import { InApp } from './components/in_app';
+import { useInAppHandler, messagingHeadlessTask } from './firebase/notifications_listener'
 import Inngage from './Inngage';
 
-//-------------- In-APP Component -------------//
-export { Inapp };
-
-//-------------- Inngage Wrapper --------------//
+export { InApp };
+export { useInAppHandler, messagingHeadlessTask }
 export default Inngage;
+
+
+
+
