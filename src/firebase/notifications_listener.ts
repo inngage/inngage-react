@@ -7,8 +7,14 @@ import {
   onMessage,
   onNotificationOpenedApp,
   getInitialNotification,
-  FirebaseMessagingTypes,
 } from '@react-native-firebase/messaging';
+
+type RemoteMessage = {
+  messageId?: string;
+  data?: Record<string, string | object>;
+  notification?: { title?: string; body?: string } & Record<string, any>;
+  [key: string]: any;
+};
 
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 
@@ -149,7 +155,7 @@ const flushPendingQueue = async () => {
 };
 
 const handleNotification = async (
-  remoteMessage: FirebaseMessagingTypes.RemoteMessage | any,
+  remoteMessage: RemoteMessage | any,
 ) => {
   const data = remoteMessage?.data ?? {};
   const notId = data?.notId;
@@ -200,7 +206,7 @@ const handleNotification = async (
 
 
 const handleUniqueRemoteMessage = async (
-  remoteMessage: { messageId?: string } & Partial<FirebaseMessagingTypes.RemoteMessage>,
+  remoteMessage: { messageId?: string } & Partial<RemoteMessage>,
 ) => {
   try {
     const newId = remoteMessage?.messageId;
@@ -209,7 +215,7 @@ const handleUniqueRemoteMessage = async (
     await deliverToCallbackOnce({ messageId: remoteMessage.messageId, data: remoteMessage.data });
 
     if (!newId) {
-      await handleNotification(remoteMessage as FirebaseMessagingTypes.RemoteMessage);
+      await handleNotification(remoteMessage as RemoteMessage);
       return;
     }
 
@@ -217,7 +223,7 @@ const handleUniqueRemoteMessage = async (
 
     await AsyncStorage.setItem(KEY_LAST_CLICK_HANDLED_MESSAGE_ID, newId);
 
-    await handleNotification(remoteMessage as FirebaseMessagingTypes.RemoteMessage);
+    await handleNotification(remoteMessage as RemoteMessage);
   } catch (e) {
     console.error(e);
   }
@@ -226,7 +232,7 @@ const handleUniqueRemoteMessage = async (
 export const messagingHeadlessTask = () => {
   return setBackgroundMessageHandler(
     messagingInstance,
-    async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
+    async (remoteMessage: RemoteMessage) => {
       if (InngageProperties.getDebugMode()) {
         console.log('INNGAGE BACKGROUND AND CLOSED DATA: ', remoteMessage);
       }
@@ -355,7 +361,7 @@ export const InngageNotificationMessage = (
 
                 case EventType.PRESS:
                   currentFirebaseListenCallback?.(notificationData);
-                  handleNotification(remoteMessage as FirebaseMessagingTypes.RemoteMessage);
+                  handleNotification(remoteMessage as RemoteMessage);
                   break;
               }
             },

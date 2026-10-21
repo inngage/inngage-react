@@ -1,7 +1,5 @@
 import { Platform } from 'react-native';
-import { getApp } from '@react-native-firebase/app';
 import {
-  AuthorizationStatus,
   getMessaging,
   getToken as getFcmTokenFromMessaging,
   isDeviceRegisteredForRemoteMessages,
@@ -24,8 +22,9 @@ import notifee from '@notifee/react-native';
 
 const API_LEVEL_33 = 33;
 
-const app = getApp();
-const messagingInstance = getMessaging(app);
+const messagingInstance = getMessaging();
+// Values are stable across RNFirebase versions (FirebaseMessagingTypes.AuthorizationStatus)
+const AuthorizationStatus = { NOT_DETERMINED: -1, DENIED: 0, AUTHORIZED: 1, PROVISIONAL: 2, EPHEMERAL: 3 } as const;
 const getFirebaseAccess = async () => {
   return handleNotificationsPermission();
 };
