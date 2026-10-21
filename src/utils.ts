@@ -33,3 +33,6 @@ export const isEmpty = (obj: any) => {
 
   return JSON.stringify(obj) === JSON.stringify({});
 }
+
+export const toStringValue = (v: unknown): string =>
+  typeof v === 'string' ? v : JSON.stringify(v ?? '');

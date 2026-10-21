@@ -7,8 +7,8 @@ export const buildStyles = (data: any, screen: any) => StyleSheet.create({
     height: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'transparent', // Cor do botão
-    borderRadius: 25, // Torna o botão circular
+    backgroundColor: 'transparent',
+    borderRadius: 25,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -18,9 +18,9 @@ export const buildStyles = (data: any, screen: any) => StyleSheet.create({
     zIndex: 10,
   },
   textButton: {
-    color: '#000', // Cor do texto "X"
-    fontSize: 16, // Tamanho do "X"
-    fontWeight: 'bold', // Deixa o "X" em negrito
+    color: '#000',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   content: {
     backgroundColor: data?.background_color,

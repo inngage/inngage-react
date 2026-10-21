@@ -37,7 +37,7 @@ export const fetchClient = async (
     isDev = false
 ): Promise<Response> => {
     try {
-        const url: URL = new URL(`${baseUrlHook[isDev as any]}${path}`);
+        const url = `${baseUrlHook[isDev as any]}${path}`;
         const request: RequestInit = requestConfigFactory(method, requestBody);
         const response: Response = await fetch(url, request);
 
