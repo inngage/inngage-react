@@ -1,3 +1,6 @@
 node_modules
 example
 build
+CLAUDE.md
+.claude/
+docs/

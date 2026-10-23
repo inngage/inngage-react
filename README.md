@@ -49,7 +49,7 @@ npm i @inngageregistry/inngage-react
 Este comando adiciona a seguinte linha no arquivo _package.json_ de seu pacote:
 ``` 
 "dependencies": {
-	"@inngageregistry/inngage-react": "^4.0.0-beta.2",
+	"@inngageregistry/inngage-react": "^4.3.0",
 }
 ```
 > 📘 Se a instalação via `npm` não funcionar corretamente, você pode instalar a dependência utilizando o `yarn`. 
@@ -57,5 +57,38 @@ Este comando adiciona a seguinte linha no arquivo _package.json_ de seu pacote:
 
 Para instalar a SDK com o yarn, siga os passos abaixo:
 
-1. No arquivo `package.json`, adicione a seguinte dependência em `dependencies`: **"@inngageregistry/inngage-react": "^4.0.0-beta.2"**.
+1. No arquivo `package.json`, adicione a seguinte dependência em `dependencies`: **"@inngageregistry/inngage-react": "^4.3.0"**.
 2. No terminal, dentro da pasta do seu projeto, execute o comando: **yarn install**. Isso irá instalar a SDK corretamente.
+## Registro de assinante (Subscription API v4)
+
+A partir da versão 4.3.0 a SDK registra o dispositivo em `POST /v4/subscription/` e atualiza o perfil em `POST /v4/subscription/addCustomField`. O histórico de versões está em [CHANGELOG.md](./CHANGELOG.md).
+
+```ts
+import Inngage from '@inngageregistry/inngage-react';
+
+// Abertura do app (antes do login): o dispositivo é registrado com um UUID técnico gerado pela SDK
+await Inngage.subscribe({ appToken: 'YOUR_APP_TOKEN' });
+
+// Após o login: o mesmo dispositivo é associado ao usuário
+await Inngage.subscribe({
+  appToken: 'YOUR_APP_TOKEN',
+  friendlyIdentifier: 'USER_ID',
+  email: 'user@example.com',
+  phoneNumber: '5511999998888',
+  customFields: { nome: 'Maria' },
+});
+
+// Atualização de perfil sem efeito de sessão (customFields é obrigatório)
+await Inngage.addUserData({
+  identifier: 'USER_ID',
+  customFields: { plano: 'premium' },
+});
+```
+
+Pontos de atenção:
+
+- `subscribe` exige o token FCM. Se o Firebase não estiver configurado, nada é enviado, o log mostra `[INNGAGE] subscribe aborted: FCM token unavailable…` e a Promise é rejeitada.
+- Sem `friendlyIdentifier`, o `identifier` enviado é um UUID gerado uma vez e guardado no dispositivo (AsyncStorage `inngageUuid`). O login posterior com `friendlyIdentifier` promove o mesmo subscriber.
+- `addUserData` precisa de `identifier` (ou de um `subscribe` anterior com `friendlyIdentifier`) e de `customFields` com ao menos um campo; o nome do campo deve existir no cadastro de campos personalizados do app na plataforma Inngage.
+- Telefone com DDI e só dígitos; e-mail em qualquer caixa (a API normaliza).
+- Ative `Inngage.setDebugMode(true)` em desenvolvimento para ver payload e resposta (`statusDescription`) de cada chamada no log.
