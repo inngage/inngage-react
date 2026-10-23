@@ -1,8 +1,8 @@
 const baseUrlHook = {
-    [false as any]: 'https://api.inngage.com.br/v1',
-    [undefined as any]: 'https://api.inngage.com.br/v1',
-    [null as any]: 'https://api.inngage.com.br/v1',
-    [true as any]: 'https://apid.inngage.com.br/v1',
+    [false as any]: 'https://api.inngage.com.br',
+    [undefined as any]: 'https://api.inngage.com.br',
+    [null as any]: 'https://api.inngage.com.br',
+    [true as any]: 'https://apid.inngage.com.br',
 }
 
 const requestConfigFactory = (method, request) => {
@@ -30,6 +30,19 @@ const requestConfigFactory = (method, request) => {
     return objToSend
 }
 
+const readErrorBody = async (response: Response): Promise<string> => {
+    try {
+        const text = await response.text();
+        return text ? ` ${text}` : '';
+    } catch {
+        return '';
+    }
+};
+
+/**
+ * Performs an HTTP call against the Inngage API.
+ * `path` must include the API version (e.g. `/v4/subscription/`); the base URL only carries the host.
+ */
 export const fetchClient = async (
     method: string,
     requestBody: any,
@@ -42,7 +55,8 @@ export const fetchClient = async (
         const response: Response = await fetch(url, request);
 
         if (!response.ok) {
-            throw new Error(`Network response was not ok (${response.status})`);
+            const body = await readErrorBody(response);
+            throw new Error(`Inngage API ${response.status} at ${path}:${body}`);
         }
 
         return response;
