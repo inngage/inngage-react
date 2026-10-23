@@ -1,6 +1,6 @@
 {
   "name": "@inngageregistry/inngage-react",
-  "version": "4.2.0",
+  "version": "4.3.0",
   "description": "Inngage Plugin for React Native applications for marketing campaign optimization using Push Notification.",
   "author": "Inngage Developer",
   "license": "ISC",
@@ -32,6 +32,9 @@
     "build": "npm run clean && tsc -p tsconfig.build.json",
     "prepare": "npm run build",
     "test": "echo \"No tests yet\" && exit 0"
+  },
+  "dependencies": {
+    "react-native-uuid": "^2.0.4"
   },
   "peerDependencies": {
     "@notifee/react-native": ">=7 <10",

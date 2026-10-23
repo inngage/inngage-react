@@ -1,11 +1,23 @@
 import { InngageProperties } from '../models/inngage_properties';
 import { subscriptionApi, notificationApi, eventsApi, addUserDataApi } from '../api/api';
 
+const logResponse = async (label: string, response: Response) => {
+    if (!InngageProperties.getDebugMode()) return;
+    try {
+        const body = await response.clone().json();
+        console.log(`INNGAGE RESPONSE ${label}: ${response.status}`, body);
+    } catch {
+        console.log(`INNGAGE RESPONSE ${label}: ${response.status}`);
+    }
+};
+
 class ApiService {
     async subscribe(request: any) {
         if (InngageProperties.getDebugMode())
             console.log('INNGAGE PAYLOAD SUBSCRIPTION: ', request)
-        return subscriptionApi(request);
+        const response = await subscriptionApi(request);
+        await logResponse('SUBSCRIPTION', response);
+        return response;
     }
 
     async sendEvent(request: any, dev = false) {
@@ -17,7 +29,9 @@ class ApiService {
     async addUserData(request: any, dev = false) {
         if (InngageProperties.getDebugMode())
             console.log('INNGAGE PAYLOAD ADDUSERDATA: ', request)
-        return addUserDataApi(request);
+        const response = await addUserDataApi(request);
+        await logResponse('ADDUSERDATA', response);
+        return response;
     }
 }
 

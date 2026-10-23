@@ -10,9 +10,11 @@ import DeviceInfo from 'react-native-device-info';
 import * as RNLocalize from 'react-native-localize';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { formatDate } from './utils';
+import { compactPayload, formatDate } from './utils';
 import { InngageNotificationMessage } from './firebase/notifications_listener';
 import { InngageProperties } from './models/inngage_properties';
+import { getOrCreateInngageUuid } from './services/identity';
+import { SDK_VERSION } from './version';
 
 import RNPermissions, { NotificationOption, RESULTS } from 'react-native-permissions';
 
@@ -25,11 +27,24 @@ const API_LEVEL_33 = 33;
 const messagingInstance = getMessaging();
 // Values are stable across RNFirebase versions (FirebaseMessagingTypes.AuthorizationStatus)
 const AuthorizationStatus = { NOT_DETERMINED: -1, DENIED: 0, AUTHORIZED: 1, PROVISIONAL: 2, EPHEMERAL: 3 } as const;
+
+interface PushAccess {
+  token: string | null;
+  optIn: boolean;
+}
+
 const getFirebaseAccess = async () => {
-  return handleNotificationsPermission();
+  const { token } = await getPushAccess();
+  return token;
 };
 
-const handleNotificationsPermission = async () => {
+const getPushAccess = async (): Promise<PushAccess> => {
+  const optIn = await handleNotificationsPermission();
+  const token = await getFirebaseToken();
+  return { token, optIn };
+};
+
+const handleNotificationsPermission = async (): Promise<boolean> => {
   const options: NotificationOption[] = ['alert', 'badge', 'sound'];
   const isAndroid = Platform.OS === 'android';
   const apiLevel = Platform.OS === 'android' ? await DeviceInfo.getApiLevel() : 0;
@@ -67,11 +82,8 @@ const handleNotificationsPermission = async () => {
     }
   }
 
-  // if (!permissionGranted) {
-  //   return null;
-  // }
-
-  return getFirebaseToken();
+  // The device is registered even when permission is denied; `opt_in` carries the real state.
+  return permissionGranted;
 };
 
 const getFirebaseToken = async () => {
@@ -99,6 +111,16 @@ const getFirebaseToken = async () => {
 
   return newFcmToken;
 };
+
+const getCachedFirebaseToken = async (): Promise<string | null> => {
+  try {
+    return await AsyncStorage.getItem('fcmToken');
+  } catch {
+    return null;
+  }
+};
+
+const normalizeIdentifier = (value?: string): string => (value ?? '').trim();
 
 interface SubscriptionProps {
   appToken: string;
@@ -158,6 +180,12 @@ class Inngage {
     }
   }
 
+  /**
+   * Registers or updates the subscriber and device on `POST /v4/subscription/`.
+   * Without `friendlyIdentifier` the device is registered under a stable UUID generated
+   * by the SDK (technical identifier). Rejects when the FCM token cannot be obtained:
+   * `registration` is mandatory and nothing is sent in that case.
+   */
   static async subscribe({
     appToken,
     friendlyIdentifier,
@@ -170,36 +198,50 @@ class Inngage {
     InngageProperties.appToken = appToken;
     InngageProperties.identifier = friendlyIdentifier!;
 
-    const respToken = await getFirebaseAccess();
+    const { token: registration, optIn } = await getPushAccess();
+
+    if (!registration) {
+      const message =
+        '[INNGAGE] subscribe aborted: FCM token unavailable. Check the Firebase configuration ' +
+        '(google-services.json / GoogleService-Info.plist) and the notification permission.';
+      console.error(message);
+      throw new Error(message);
+    }
 
     const { countryCode: osLocale, languageCode: osLanguage } = RNLocalize.getLocales()[0] || ({} as any);
     const deviceManufacturer = await DeviceInfo.getManufacturer();
     const installTime = await DeviceInfo.getFirstInstallTime();
     const lastUpdateTime = await DeviceInfo.getLastUpdateTime();
-    const uuid = await DeviceInfo.getUniqueId();
+    const uuid = await getOrCreateInngageUuid();
+    const androidId = Platform.OS === 'android' ? await DeviceInfo.getAndroidId() : undefined;
     const appInstalledIn = formatDate(installTime);
     const appUpdatedIn = formatDate(lastUpdateTime);
 
+    const identifier = normalizeIdentifier(friendlyIdentifier) || uuid;
+
     const subscription = {
-      registerSubscriberRequest: {
+      registerSubscriberRequest: compactPayload({
         app_token: appToken,
-        identifier: friendlyIdentifier ?? uuid,
-        registration: respToken,
-        platform: DeviceInfo.getSystemName(),
-        sdk: DeviceInfo.getBuildNumber(),
+        identifier,
+        registration,
+        platform: Platform.OS,
+        sdk: SDK_VERSION,
+        app_version: DeviceInfo.getVersion(),
         device_model: DeviceInfo.getModel(),
         device_manufacturer: deviceManufacturer,
-        os_locale: osLocale,
+        os_name: DeviceInfo.getSystemName(),
+        os_version: DeviceInfo.getSystemVersion(),
         os_language: osLanguage,
-        os_version: DeviceInfo.getReadableVersion(),
-        app_version: DeviceInfo.getBuildNumber(),
+        os_locale: osLocale,
         app_installed_in: appInstalledIn,
         app_updated_in: appUpdatedIn,
         uuid,
-        phone_Number: phoneNumber ?? '',
-        email: email ?? '',
-        custom_field: customFields ?? {},
-      },
+        opt_in: optIn ? '1' : '0',
+        android_id: androidId,
+        phone_number: phoneNumber,
+        email,
+        custom_field: customFields,
+      }),
     };
 
     return inngage.apiService.subscribe(subscription);
@@ -232,6 +274,12 @@ class Inngage {
     return inngage.apiService.sendEvent(request);
   }
 
+  /**
+   * Updates custom fields and contact data on `POST /v4/subscription/addCustomField`
+   * without session side effects. `identifier` falls back to the `friendlyIdentifier`
+   * given to `subscribe`; `customFields` must be a non-empty object (API requirement).
+   * The cached FCM token is sent as `registration` so an anonymous subscriber can be claimed.
+   */
   static async addUserData({
     identifier,
     customFields,
@@ -240,14 +288,33 @@ class Inngage {
   }: AddUserDataProps) {
     const inngage = Inngage.getInstance();
 
+    const resolvedIdentifier = normalizeIdentifier(identifier) || normalizeIdentifier(InngageProperties.identifier);
+
+    if (!resolvedIdentifier) {
+      const message =
+        '[INNGAGE] addUserData aborted: identifier is required. Pass `identifier` or call ' +
+        'subscribe with `friendlyIdentifier` first.';
+      console.error(message);
+      throw new Error(message);
+    }
+
+    if (!customFields || typeof customFields !== 'object' || Object.keys(customFields).length === 0) {
+      const message = '[INNGAGE] addUserData aborted: customFields must be a non-empty object.';
+      console.error(message);
+      throw new Error(message);
+    }
+
+    const registration = await getCachedFirebaseToken();
+
     const request = {
-      fieldsRequest: {
-        appToken: InngageProperties.appToken,
-        identifier: identifier,
+      fieldsRequest: compactPayload({
+        app_token: InngageProperties.appToken,
+        identifier: resolvedIdentifier,
         custom_field: customFields,
-        email: email,
-        phone_number: phoneNumber
-      },
+        email,
+        phone_number: phoneNumber,
+        registration,
+      }),
     };
 
     return inngage.apiService.addUserData(request);

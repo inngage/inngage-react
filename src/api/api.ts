@@ -1,10 +1,12 @@
 import { fetchClient } from './handler'
 
+// Each path carries its own API version: subscription endpoints use v4,
+// notification and events remain on v1 until their v4 contracts are documented.
 const apiEndpoints = {
-    subscription: '/subscription/',
-    notification: '/notification/',
-    events: '/events/newEvent/',
-    addUserData: '/subscription/addCustomField',
+    subscription: '/v4/subscription/',
+    notification: '/v1/notification/',
+    events: '/v1/events/newEvent/',
+    addUserData: '/v4/subscription/addCustomField',
 };
 
 const makeApiCall = (method: string, request: any, endpoint: string) => {
